@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
-	"time"
 
 	"github.com/Kaese72/sdup-hue/attributes"
 	"github.com/Kaese72/sdup-hue/capabilities"
@@ -58,9 +58,9 @@ func (id *HueSDUPDeviceID) Stringify() string {
 
 //SDUPDevice is the SDUP representation of any SDUP enabled device
 type SDUPDevice struct {
-	ID         string                                    `json:"id"`
+	ID string `json:"id"`
+	//Name       string                                    `json:"-"`
 	Attributes map[attributes.AttributeKey]SDUPAttribute `json:"attributes"`
-	LastSeen   time.Time                                 `json:"-"`
 }
 
 //HowChanged figures out what capabilities have been added, changed and lost
@@ -94,8 +94,9 @@ func (device *SDUPDevice) HowChanged(otherDevice *SDUPDevice) ([]SDUPAttribute, 
 
 //SDUPAttribute describes the state and capabilities of an SDUP attribute
 type SDUPAttribute struct {
-	Name         attributes.AttributeKey                                `json:"name"`
+	Name         attributes.AttributeKey                                `json:"-"`
 	BooleanState *bool                                                  `json:"boolean-state,omitempty"`
+	KeyVal       capabilities.RawKeyValContainer                        `json:"keyval-state,omitempty"`
 	Capabilities map[capabilities.CapabilityKey]capabilities.Capability `json:"capabilities,omitempty"`
 }
 
@@ -103,6 +104,10 @@ type SDUPAttribute struct {
 func (attr *SDUPAttribute) Equal(other *SDUPAttribute) (bool, error) {
 	if attr.BooleanState != nil && other.BooleanState != nil {
 		return *attr.BooleanState == *other.BooleanState, nil
+
+	} else if attr.KeyVal != nil && other.KeyVal != nil {
+		return reflect.DeepEqual(attr.KeyVal, other.KeyVal), nil
 	}
+
 	return false, errors.New("Could not find common descriptor")
 }

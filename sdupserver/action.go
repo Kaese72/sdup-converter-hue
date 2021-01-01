@@ -22,18 +22,12 @@ func (sdup *SDUPServer) CapabilityTrigger(writer http.ResponseWriter, reader *ht
 	if device, ok := sdup.DeviceContainer.Devices[deviceID]; ok {
 		if attribute, ok := device.Attributes[attributes.AttributeKey(attributeKey)]; ok {
 			if capInterface, ok := attribute.Capabilities[capabilities.CapabilityKey(capabilityKey)]; ok {
-				switch capability := capInterface.(type) {
-				case capabilities.SimpleCapability:
-					if err := capability.Callable(); err != nil {
-						log.Log(log.Error, err.Error(), nil)
-						http.Error(writer, err.Error(), http.StatusInternalServerError)
-					} else {
-						log.Log(log.Info, fmt.Sprintf("Set capability %s on attribute %s on device %s", capabilityKey, attributeKey, deviceID), nil)
-						http.Error(writer, fmt.Sprintf("Set capability %s on attribute %s on device %s", capabilityKey, attributeKey, deviceID), http.StatusOK)
-					}
-				default:
-					log.Log(log.Error, fmt.Sprintf("Unknown capability type; %T", capability), nil)
-					http.Error(writer, "", http.StatusInternalServerError)
+				if err := capInterface.TriggerCapability(reader.Body); err != nil {
+					log.Log(log.Error, err.Error(), nil)
+					http.Error(writer, err.Error(), http.StatusInternalServerError)
+				} else {
+					log.Log(log.Info, fmt.Sprintf("Set capability %s on attribute %s on device %s", capabilityKey, attributeKey, deviceID), nil)
+					http.Error(writer, fmt.Sprintf("Set capability %s on attribute %s on device %s", capabilityKey, attributeKey, deviceID), http.StatusOK)
 				}
 
 			} else {
