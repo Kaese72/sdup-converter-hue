@@ -1,8 +1,4 @@
-package capabilities
-
-import (
-	"io"
-)
+package sduptemplates
 
 //CapabilityKey is the string identifier of a capability
 type CapabilityKey string
@@ -15,8 +11,3 @@ const (
 	//CapabilitySetAllKeyVal measn that you can change all attribute keyvals at the same time
 	CapabilitySetAllKeyVal CapabilityKey = "setkeyval"
 )
-
-//Capability represents a capability
-type Capability interface {
-	TriggerCapability(capability io.ReadCloser) error
-}

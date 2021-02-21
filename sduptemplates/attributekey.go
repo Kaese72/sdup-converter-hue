@@ -1,4 +1,4 @@
-package attributes
+package sduptemplates
 
 //AttributeKey is the string identifier of an attribute
 type AttributeKey string

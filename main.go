@@ -3,44 +3,37 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/Kaese72/sdup-hue/config"
-	"github.com/Kaese72/sdup-hue/sdupserver"
-	"github.com/amimof/huego"
-	"github.com/gorilla/mux"
+	"github.com/Kaese72/sdup-hue/httpsdup"
+	"github.com/Kaese72/sdup-hue/log"
+	"github.com/Kaese72/sdup-hue/sduphue"
 )
 
 func main() {
 	var conf config.Config
 
 	if err := json.NewDecoder(os.Stdin).Decode(&conf); err != nil {
-		log.Fatal(err)
+		log.Log(log.Error, err.Error(), nil)
 	}
 
 	if err := conf.Validate(); err != nil {
-		obj, err2 := json.Marshal(config.NewExampleConfig())
-		if err2 != nil {
-			log.Fatal(err2)
+		obj, err := json.Marshal(config.NewExampleConfig())
+		if err != nil {
+			log.Log(log.Error, err.Error(), nil)
 		}
-		_, err2 = fmt.Fprintf(os.Stdout, "%s\n", obj)
-		if err2 != nil {
-			log.Fatal(err2)
+		_, err = fmt.Fprintf(os.Stdout, "%s\n", obj)
+		if err != nil {
+			log.Log(log.Error, err.Error(), nil)
 		}
-		log.Fatal(err)
+		return
 	}
 
-	bridge := huego.New(conf.Hue.URL, conf.Hue.APIKey)
-	SDUPServer, _ := sdupserver.NewSDUPServer(bridge, false, true)
-	router := mux.NewRouter()
-	router.HandleFunc("/discovery", SDUPServer.Discovery)
-	router.HandleFunc("/subscribe", SDUPServer.Subscriptions.Subscribe)
-	router.HandleFunc("/capability/{device_id}/{attribute_key}/{capability_key}", SDUPServer.CapabilityTrigger).Methods("POST")
-	router.PathPrefix("/ui/").Handler(http.StripPrefix("/ui/", http.FileServer(http.Dir("./ui/"))))
-
+	SDUPServer := sduphue.InitSDUPHueTarget(conf.Hue.URL, conf.Hue.APIKey)
+	router := httpsdup.InitHTTPMux(SDUPServer)
 	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", conf.SDUP.ListenAddress, conf.SDUP.ListenPort), router); err != nil {
-		log.Fatal(err)
+		log.Log(log.Error, err.Error(), nil)
 	}
 }

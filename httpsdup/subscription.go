@@ -1,4 +1,4 @@
-package sdupserver
+package httpsdup
 
 import (
 	"encoding/json"
@@ -6,17 +6,17 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/Kaese72/sdup-hue/devicecontainer"
 	"github.com/Kaese72/sdup-hue/log"
+	"github.com/Kaese72/sdup-hue/sduptemplates"
 )
 
 type Subscription struct {
-	Reader chan devicecontainer.SDUPDevice
+	Reader chan sduptemplates.DeviceUpdate
 }
 
 func NewSubscription() *Subscription {
 	return &Subscription{
-		Reader: make(chan devicecontainer.SDUPDevice),
+		Reader: make(chan sduptemplates.DeviceUpdate),
 	}
 }
 
@@ -24,14 +24,14 @@ type Subscriptions struct {
 	subscriptions []*Subscription
 	subsMutex     sync.Mutex
 	cancelChan    chan *Subscription
-	EventChan     chan devicecontainer.SDUPDevice
+	EventChan     chan sduptemplates.DeviceUpdate
 }
 
-func NewSubscriptions() *Subscriptions {
+func NewSubscriptions(updates chan sduptemplates.DeviceUpdate) *Subscriptions {
 	subs := &Subscriptions{
 		subscriptions: []*Subscription{},
 		cancelChan:    make(chan *Subscription),
-		EventChan:     make(chan devicecontainer.SDUPDevice),
+		EventChan:     updates,
 	}
 	go subs.eventRoutine()
 	return subs
