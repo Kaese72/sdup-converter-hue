@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Kaese72/sdup-converter-hue/log"
-	"github.com/Kaese72/sdup-converter-hue/sduptemplates"
+	"github.com/Kaese72/sdup-lib/sduptemplates"
 	"github.com/amimof/huego"
 	"github.com/mitchellh/mapstructure"
 )

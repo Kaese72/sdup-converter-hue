@@ -7,9 +7,9 @@ import (
 	"os"
 
 	"github.com/Kaese72/sdup-converter-hue/config"
-	"github.com/Kaese72/sdup-converter-hue/httpsdup"
 	"github.com/Kaese72/sdup-converter-hue/log"
 	"github.com/Kaese72/sdup-converter-hue/sduphue"
+	"github.com/Kaese72/sdup-lib/httpsdup"
 )
 
 func main() {
