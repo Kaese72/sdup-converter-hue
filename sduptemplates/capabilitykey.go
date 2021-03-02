@@ -8,6 +8,8 @@ const (
 	CapabilityActivate CapabilityKey = "activate"
 	//CapabilityDeactivate means the associated attribute can be deactivated
 	CapabilityDeactivate CapabilityKey = "deactivate"
-	//CapabilitySetAllKeyVal measn that you can change all attribute keyvals at the same time
-	CapabilitySetAllKeyVal CapabilityKey = "setkeyval"
+	//CapabilitySetColorXY means that you can change the x and y coordinates in color mode
+	CapabilitySetColorXY CapabilityKey = "setcolorxy"
+	//CapabilitySetColorTemp means that you can change the temperature in color mode
+	CapabilitySetColorTemp CapabilityKey = "setcolorct"
 )

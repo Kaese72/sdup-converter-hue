@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/Kaese72/sdup-hue/log"
-	"github.com/Kaese72/sdup-hue/sduptemplates"
+	"github.com/Kaese72/sdup-converter-hue/log"
+	"github.com/Kaese72/sdup-converter-hue/sduptemplates"
 )
 
 type Subscription struct {

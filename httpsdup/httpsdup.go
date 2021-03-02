@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/Kaese72/sdup-hue/log"
-	"github.com/Kaese72/sdup-hue/sduptemplates"
+	"github.com/Kaese72/sdup-converter-hue/log"
+	"github.com/Kaese72/sdup-converter-hue/sduptemplates"
 	"github.com/gorilla/mux"
 )
 

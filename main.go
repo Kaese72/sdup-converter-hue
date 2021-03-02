@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/Kaese72/sdup-hue/config"
-	"github.com/Kaese72/sdup-hue/httpsdup"
-	"github.com/Kaese72/sdup-hue/log"
-	"github.com/Kaese72/sdup-hue/sduphue"
+	"github.com/Kaese72/sdup-converter-hue/config"
+	"github.com/Kaese72/sdup-converter-hue/httpsdup"
+	"github.com/Kaese72/sdup-converter-hue/log"
+	"github.com/Kaese72/sdup-converter-hue/sduphue"
 )
 
 func main() {

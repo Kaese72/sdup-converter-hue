@@ -3,7 +3,7 @@ package httpsdup
 import (
 	"net/http"
 
-	"github.com/Kaese72/sdup-hue/sduptemplates"
+	"github.com/Kaese72/sdup-converter-hue/sduptemplates"
 )
 
 func HTTPStatusCode(err error) int {
