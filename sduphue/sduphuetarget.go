@@ -80,14 +80,14 @@ func (target SDUPHueTarget) TriggerCapability(deviceID sduptemplates.DeviceID, c
 	if device, ok := target.devices[deviceID]; ok {
 		if capability, ok := device.Capabilities[capabilityKey]; ok {
 			return capability.Trigger(device.ID.Index, argument)
-		} else {
-			log.Log(log.Debug, "Could not find capability", map[string]string{"device": string(deviceID), "capability": string(capabilityKey)})
-			return sduptemplates.NoSuchCapability
 		}
-	} else {
-		log.Log(log.Debug, "Could not find device", map[string]string{"device": string(deviceID)})
-		return sduptemplates.NoSuchDevice
+
+		log.Log(log.Debug, "Could not find capability", map[string]string{"device": string(deviceID), "capability": string(capabilityKey)})
+		return sduptemplates.NoSuchCapability
+
 	}
+	log.Log(log.Debug, "Could not find device", map[string]string{"device": string(deviceID)})
+	return sduptemplates.NoSuchDevice
 }
 
 func InitSDUPHueTarget(URL, APIKey string) SDUPHueTarget {
