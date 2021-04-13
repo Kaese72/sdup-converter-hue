@@ -121,6 +121,9 @@ func (cap XYColor) Spec() sduptemplates.CapabilitySpec {
 	return sduptemplates.CapabilitySpec{}
 }
 
+// ###########
+// # XYColor #
+// ###########
 type CTColor struct{}
 
 type CTColorArgs struct {
@@ -190,6 +193,14 @@ func createLightDevice(light huego.Light) HueDevice {
 	device.Attributes[sduptemplates.AttributeDescription] = HueAttribute{
 		State: sduptemplates.AttributeState{
 			Text: &light.Name,
+		},
+	}
+	// ############
+	// # UniqueID #
+	// ############
+	device.Attributes[sduptemplates.AttributeUniqueID] = HueAttribute{
+		State: sduptemplates.AttributeState{
+			Text: &light.UniqueID,
 		},
 	}
 
