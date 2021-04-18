@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Kaese72/sdup-converter-hue/log"
+	log "github.com/Kaese72/sdup-lib/logging"
 	"github.com/Kaese72/sdup-lib/sduptemplates"
 	"github.com/amimof/huego"
 )
@@ -77,7 +77,7 @@ func (target *SDUPHueTarget) Initialize() (specs []sduptemplates.DeviceSpec, cha
 	}
 	// Register all devices
 	for _, device := range devices {
-		log.Log(log.Info, "Initializeing bridge with light", map[string]string{"light": fmt.Sprint(device.ID.Index)})
+		log.Info("Initializeing bridge with light", map[string]string{"light": fmt.Sprint(device.ID.Index)})
 		target.devices[device.ID.SDUPEncode()] = device
 		specs = append(specs, device.Spec())
 	}
@@ -90,7 +90,7 @@ func (target *SDUPHueTarget) Initialize() (specs []sduptemplates.DeviceSpec, cha
 		for range timer.C {
 			err := target.UpdateAllDevices()
 			if err != nil {
-				log.Log(log.Error, err.Error(), nil)
+				log.Error(err.Error())
 			}
 		}
 	}()
@@ -112,11 +112,11 @@ func (target SDUPHueTarget) TriggerCapability(deviceID sduptemplates.DeviceID, c
 			return capability.Trigger(device.ID.Index, argument)
 		}
 
-		log.Log(log.Debug, "Could not find capability", map[string]string{"device": string(deviceID), "capability": string(capabilityKey)})
+		log.Debug("Could not find capability", map[string]string{"device": string(deviceID), "capability": string(capabilityKey)})
 		return sduptemplates.NoSuchCapability
 
 	}
-	log.Log(log.Debug, "Could not find device", map[string]string{"device": string(deviceID)})
+	log.Debug("Could not find device", map[string]string{"device": string(deviceID)})
 	return sduptemplates.NoSuchDevice
 }
 

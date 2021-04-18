@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Kaese72/sdup-converter-hue/log"
+	log "github.com/Kaese72/sdup-lib/logging"
 	"github.com/Kaese72/sdup-lib/sduptemplates"
 	"github.com/amimof/huego"
 )
@@ -33,7 +33,7 @@ func (target *SDUPHueTarget) UpdateAllDevices() error {
 		}
 
 		if oldLight, ok := target.devices[newDevice.ID.SDUPEncode()]; ok {
-			log.Log(log.Debug, "Updating light", map[string]string{"light": fmt.Sprint(newDevice.ID.Index)})
+			log.Debug("Updating light", map[string]string{"light": fmt.Sprint(newDevice.ID.Index)})
 			//Previously known device
 			for key, newAttrVal := range newDevice.Attributes {
 				if oldAttrVal, ok := oldLight.Attributes[key]; ok {
@@ -43,13 +43,13 @@ func (target *SDUPHueTarget) UpdateAllDevices() error {
 					// TODO Might encounter diff in capabilities here
 				} else {
 					// TODO Added attributes?
-					log.Log(log.Error, "Found more capabilities?", nil)
+					log.Error("Found more capabilities?")
 				}
 			}
 			// TODO Lost attributes?
 
 		} else {
-			log.Log(log.Info, "Adding light", map[string]string{"light": fmt.Sprint(newDevice.ID.Index)})
+			log.Info("Adding light", map[string]string{"light": fmt.Sprint(newDevice.ID.Index)})
 
 			// TODO capability updates
 			for id, attribute := range newDevice.Attributes {
@@ -138,7 +138,7 @@ func createLightDevice(light huego.Light) HueDevice {
 
 		} else {
 			if len(light.State.Xy) != 0 {
-				log.Log(log.Error, "Invalid length on XY array, assuming nil values", nil)
+				log.Error("Invalid length on XY array, assuming nil values")
 			}
 			//Attach attribute with nil color xy coordinates
 			//This happens when the colormode is not set to xy but rather eg. ct
