@@ -1,23 +1,32 @@
 package sduphue
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/Kaese72/sdup-converter-hue/log"
 	"github.com/Kaese72/sdup-lib/sduptemplates"
 	"github.com/amimof/huego"
-	"github.com/mitchellh/mapstructure"
 )
 
-func (target *SDUPHueTarget) UpdateAllDevices() error {
+func (target *SDUPHueTarget) getAllDevices() (specs []HueDevice, err error) {
 	hueLights, err := bridge.GetLights()
 	if err != nil {
-		return errors.New("Failed to enumerate devices (lights) on Hue bridge")
+		return
 	}
 	for _, light := range hueLights {
-		newDevice := createLightDevice(light)
+		hueLight := createLightDevice(light)
+		specs = append(specs, hueLight)
+	}
+	return
+}
+
+func (target *SDUPHueTarget) UpdateAllDevices() error {
+	hueDevices, err := target.getAllDevices()
+	if err != nil {
+		return err
+	}
+	for _, newDevice := range hueDevices {
 		deviceUpdates := sduptemplates.DeviceUpdate{
 			ID:             newDevice.ID.SDUPEncode(),
 			AttributesDiff: sduptemplates.AttributeStateMap{},
@@ -56,98 +65,6 @@ func (target *SDUPHueTarget) UpdateAllDevices() error {
 	}
 
 	return nil
-}
-
-// ###########
-// # TurnOn #
-// ###########
-type TurnOnLight struct{}
-
-func (cap TurnOnLight) Trigger(id int, _ sduptemplates.CapabilityArgument) error {
-	//FIXME Is there anythig interesting in the huego response ?
-	_, err := bridge.SetLightState(id, huego.State{On: true})
-	return err
-}
-
-func (cap TurnOnLight) Spec() sduptemplates.CapabilitySpec {
-	return sduptemplates.CapabilitySpec{}
-}
-
-// ###########
-// # TurnOff #
-// ###########
-type TurnOffLight struct{}
-
-func (cap TurnOffLight) Trigger(id int, _ sduptemplates.CapabilityArgument) error {
-	//FIXME Is there anythig interesting in the huego response ?
-	_, err := bridge.SetLightState(id, huego.State{On: false})
-	return err
-}
-
-func (cap TurnOffLight) Spec() sduptemplates.CapabilitySpec {
-	return sduptemplates.CapabilitySpec{}
-}
-
-// ###########
-// # XYColor #
-// ###########
-type XYColor struct{}
-
-type XYColorArgs struct {
-	X *float32 `mapstructure:"x"`
-	Y *float32 `mapstructure:"y"`
-}
-
-func (cap XYColor) Trigger(id int, args sduptemplates.CapabilityArgument) error {
-	//FIXME Is there anythig interesting in the huego response ?
-	//FIXME Limitations on x and y variables
-	var pArgs XYColorArgs
-	if err := mapstructure.Decode(args, &pArgs); err != nil {
-		return err
-	}
-	if pArgs.X == nil {
-		return errors.New("x must be set")
-	}
-
-	if pArgs.Y == nil {
-		return errors.New("y must be set")
-	}
-
-	_, err := bridge.SetLightState(id, huego.State{On: true, Xy: []float32{*pArgs.X, *pArgs.Y}})
-	return err
-}
-
-func (cap XYColor) Spec() sduptemplates.CapabilitySpec {
-	return sduptemplates.CapabilitySpec{}
-}
-
-// ###########
-// # XYColor #
-// ###########
-type CTColor struct{}
-
-type CTColorArgs struct {
-	Ct *float32 `mapstructure:"ct"`
-}
-
-func (cap CTColor) Trigger(id int, args sduptemplates.CapabilityArgument) error {
-	//FIXME Is there anythig interesting in the huego response ?
-	//FIXME Limitations on x and y variables
-	var pArgs CTColorArgs
-	if err := mapstructure.Decode(args, &pArgs); err != nil {
-		return err
-	}
-	if pArgs.Ct == nil {
-		return errors.New("ct must be set")
-	}
-
-	_, err := bridge.SetLightState(id, huego.State{On: true, Ct: uint16(*pArgs.Ct)})
-	return err
-}
-
-func (cap CTColor) Spec() sduptemplates.CapabilitySpec {
-	//FIXME maximum and minimum ct
-	return sduptemplates.CapabilitySpec{}
 }
 
 //Not lowercase according to docs, but it seems like strings are not properly speced

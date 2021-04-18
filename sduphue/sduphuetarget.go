@@ -61,12 +61,42 @@ func (device HueDevice) Spec() sduptemplates.DeviceSpec {
 }
 
 type SDUPHueTarget struct {
-	devices    map[sduptemplates.DeviceID]HueDevice
-	updateChan chan sduptemplates.DeviceUpdate
+	devices     map[sduptemplates.DeviceID]HueDevice
+	updateChan  chan sduptemplates.DeviceUpdate
+	initialized bool
 }
 
-func (target SDUPHueTarget) DeviceUpdates() chan sduptemplates.DeviceUpdate {
-	return target.updateChan
+func (target *SDUPHueTarget) Initialize() (specs []sduptemplates.DeviceSpec, channel chan sduptemplates.DeviceUpdate, err error) {
+	if target.initialized {
+		panic("Hue target already initialized")
+	}
+	// Fetch all devices currently present on bridge
+	devices, err := target.getAllDevices()
+	if err != nil {
+		return
+	}
+	// Register all devices
+	for _, device := range devices {
+		log.Log(log.Info, "Initializeing bridge with light", map[string]string{"light": fmt.Sprint(device.ID.Index)})
+		target.devices[device.ID.SDUPEncode()] = device
+		specs = append(specs, device.Spec())
+	}
+
+	// Start updater
+	go func() {
+		timer := time.NewTicker(2 * time.Second)
+		//FIXME
+		defer timer.Stop()
+		for range timer.C {
+			err := target.UpdateAllDevices()
+			if err != nil {
+				log.Log(log.Error, err.Error(), nil)
+			}
+		}
+	}()
+	target.initialized = true
+	channel = target.updateChan
+	return
 }
 
 func (target SDUPHueTarget) Devices() (devices []sduptemplates.DeviceSpec, err error) {
@@ -90,24 +120,11 @@ func (target SDUPHueTarget) TriggerCapability(deviceID sduptemplates.DeviceID, c
 	return sduptemplates.NoSuchDevice
 }
 
-func InitSDUPHueTarget(URL, APIKey string) SDUPHueTarget {
+func InitSDUPHueTarget(URL, APIKey string) sduptemplates.SDUPTarget {
 	bridge = huego.New(URL, APIKey)
-	target := SDUPHueTarget{
+	target := &SDUPHueTarget{
 		devices:    map[sduptemplates.DeviceID]HueDevice{},
 		updateChan: make(chan sduptemplates.DeviceUpdate, 10),
 	}
-	go func() {
-		timer := time.NewTicker(2 * time.Second)
-		defer timer.Stop()
-		for {
-			select {
-			case <-timer.C:
-				err := target.UpdateAllDevices()
-				if err != nil {
-					log.Log(log.Error, err.Error(), nil)
-				}
-			}
-		}
-	}()
 	return target
 }
