@@ -20,7 +20,9 @@ func main() {
 	}
 
 	if err := conf.Validate(); err != nil {
-		obj, err := json.Marshal(config.NewExampleConfig())
+		log.Error(err.Error())
+		conf.PopulateExample()
+		obj, err := json.Marshal(conf)
 		if err != nil {
 			log.Error(err.Error())
 		}
@@ -31,8 +33,14 @@ func main() {
 		return
 	}
 
+	//Logger assumed initiated
+	if conf.DebugLogging != nil {
+		log.SetDebugLogging(*conf.DebugLogging)
+	}
+
 	SDUPServer := sduphue.InitSDUPHueTarget(conf.Hue.URL, conf.Hue.APIKey)
 	router := httpsdup.InitHTTPMux(SDUPServer)
+	log.Info("Starting HTTP Server")
 	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", conf.SDUP.ListenAddress, conf.SDUP.ListenPort), router); err != nil {
 		log.Error(err.Error())
 	}
