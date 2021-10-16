@@ -3,6 +3,7 @@ package sduphue
 import (
 	"encoding/base64"
 	"fmt"
+	"sync"
 	"time"
 
 	log "github.com/Kaese72/sdup-lib/logging"
@@ -63,10 +64,11 @@ func (device HueDevice) Spec() sduptemplates.DeviceSpec {
 type SDUPHueTarget struct {
 	devices     map[sduptemplates.DeviceID]HueDevice
 	updateChan  chan sduptemplates.DeviceUpdate
+	lock        sync.RWMutex
 	initialized bool
 }
 
-func (target *SDUPHueTarget) Initialize() (specs []sduptemplates.DeviceSpec, channel chan sduptemplates.DeviceUpdate, err error) {
+func (target *SDUPHueTarget) Initialize() (channel chan sduptemplates.DeviceUpdate, err error) {
 	if target.initialized {
 		panic("Hue target already initialized")
 	}
@@ -79,7 +81,6 @@ func (target *SDUPHueTarget) Initialize() (specs []sduptemplates.DeviceSpec, cha
 	for _, device := range devices {
 		log.Info("Initializeing bridge with light", map[string]string{"light": fmt.Sprint(device.ID.Index)})
 		target.devices[device.ID.SDUPEncode()] = device
-		specs = append(specs, device.Spec())
 	}
 
 	// Start updater
@@ -99,25 +100,34 @@ func (target *SDUPHueTarget) Initialize() (specs []sduptemplates.DeviceSpec, cha
 	return
 }
 
-func (target SDUPHueTarget) Devices() (devices []sduptemplates.DeviceSpec, err error) {
+func (target *SDUPHueTarget) Devices() (devices []sduptemplates.DeviceSpec, err error) {
+	target.lock.RLock()
+	defer target.lock.RUnlock()
 	for _, device := range target.devices {
 		devices = append(devices, device.Spec())
 	}
 	return
 }
 
-func (target SDUPHueTarget) TriggerCapability(deviceID sduptemplates.DeviceID, capabilityKey sduptemplates.CapabilityKey, argument sduptemplates.CapabilityArgument) error {
-	if device, ok := target.devices[deviceID]; ok {
-		if capability, ok := device.Capabilities[capabilityKey]; ok {
-			return capability.Trigger(device.ID.Index, argument)
-		}
-
-		log.Debug("Could not find capability", map[string]string{"device": string(deviceID), "capability": string(capabilityKey)})
-		return sduptemplates.NoSuchCapability
-
+func (target *SDUPHueTarget) TriggerCapability(deviceID sduptemplates.DeviceID, capabilityKey sduptemplates.CapabilityKey, argument sduptemplates.CapabilityArgument) error {
+	target.lock.RLock()
+	device, ok := target.devices[deviceID]
+	if !ok {
+		log.Debug("Could not find device", map[string]string{"device": string(deviceID)})
+		target.lock.RUnlock()
+		return sduptemplates.NoSuchDevice
 	}
-	log.Debug("Could not find device", map[string]string{"device": string(deviceID)})
-	return sduptemplates.NoSuchDevice
+
+	capability, ok := device.Capabilities[capabilityKey]
+	if !ok {
+		log.Debug("Could not find capability", map[string]string{"device": string(deviceID), "capability": string(capabilityKey)})
+		target.lock.RUnlock()
+		return sduptemplates.NoSuchCapability
+	}
+	//We are unlocking before since the triggering can take quite a while
+	target.lock.RUnlock()
+	return capability.Trigger(device.ID.Index, argument)
+
 }
 
 func InitSDUPHueTarget(URL, APIKey string) sduptemplates.SDUPTarget {

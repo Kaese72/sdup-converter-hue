@@ -26,6 +26,10 @@ func (target *SDUPHueTarget) UpdateAllDevices() error {
 	if err != nil {
 		return err
 	}
+
+	target.lock.Lock()
+	defer target.lock.Unlock()
+
 	for _, newDevice := range hueDevices {
 		deviceUpdates := sduptemplates.DeviceUpdate{
 			ID:             newDevice.ID.SDUPEncode(),
