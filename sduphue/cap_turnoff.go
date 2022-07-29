@@ -5,14 +5,19 @@ import (
 	"github.com/amimof/huego"
 )
 
-type TurnOffLight struct{}
+func init() {
+	capRegistry[sduptemplates.CapabilityDeactivate] = TriggerTurnOff
+	gCapRegistry[sduptemplates.CapabilityDeactivate] = GTriggerTurnOff
+}
 
-func (cap TurnOffLight) Trigger(id int, _ sduptemplates.CapabilityArgument) error {
+func TriggerTurnOff(id int, _ sduptemplates.CapabilityArgument) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	_, err := bridge.SetLightState(id, huego.State{On: false})
 	return err
 }
 
-func (cap TurnOffLight) Spec() sduptemplates.CapabilitySpec {
-	return sduptemplates.CapabilitySpec{}
+func GTriggerTurnOff(id int, _ sduptemplates.CapabilityArgument) error {
+	//FIXME Is there anythig interesting in the huego response ?
+	_, err := bridge.SetGroupState(id, huego.State{On: false})
+	return err
 }

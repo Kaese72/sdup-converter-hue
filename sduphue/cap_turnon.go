@@ -5,14 +5,19 @@ import (
 	"github.com/amimof/huego"
 )
 
-type TurnOnLight struct{}
+func init() {
+	capRegistry[sduptemplates.CapabilityActivate] = TriggerTurnOn
+	gCapRegistry[sduptemplates.CapabilityActivate] = GTriggerTurnOn
+}
 
-func (cap TurnOnLight) Trigger(id int, _ sduptemplates.CapabilityArgument) error {
+func TriggerTurnOn(id int, _ sduptemplates.CapabilityArgument) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	_, err := bridge.SetLightState(id, huego.State{On: true})
 	return err
 }
 
-func (cap TurnOnLight) Spec() sduptemplates.CapabilitySpec {
-	return sduptemplates.CapabilitySpec{}
+func GTriggerTurnOn(id int, _ sduptemplates.CapabilityArgument) error {
+	//FIXME Is there anythig interesting in the huego response ?
+	_, err := bridge.SetGroupState(id, huego.State{On: true})
+	return err
 }

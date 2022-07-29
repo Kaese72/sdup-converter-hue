@@ -1,7 +1,7 @@
 package sduphue
 
 import (
-	"fmt"
+	"strconv"
 	"strings"
 
 	log "github.com/Kaese72/sdup-lib/logging"
@@ -9,11 +9,12 @@ import (
 	"github.com/amimof/huego"
 )
 
-func (target *SDUPHueTarget) getAllDevices() (specs []HueDevice, err error) {
+func (target *SDUPHueTarget) getAllDevices() (specs []sduptemplates.DeviceSpec, err error) {
 	hueLights, err := bridge.GetLights()
 	if err != nil {
 		return
 	}
+
 	for _, light := range hueLights {
 		hueLight := createLightDevice(light)
 		specs = append(specs, hueLight)
@@ -21,51 +22,40 @@ func (target *SDUPHueTarget) getAllDevices() (specs []HueDevice, err error) {
 	return
 }
 
-func (target *SDUPHueTarget) UpdateAllDevices() error {
+func (target *SDUPHueTarget) getAllGroups() (specs []sduptemplates.DeviceGroupSpec, err error) {
+	hueGroups, err := bridge.GetGroups()
+	if err != nil {
+		return
+	}
+
+	for _, group := range hueGroups {
+		hueGroup := createDeviceGroup(group)
+		specs = append(specs, hueGroup)
+	}
+	return
+}
+
+func (target *SDUPHueTarget) UpdateEverything() error {
 	hueDevices, err := target.getAllDevices()
 	if err != nil {
 		return err
 	}
-
-	target.lock.Lock()
-	defer target.lock.Unlock()
-
 	for _, newDevice := range hueDevices {
-		deviceUpdates := sduptemplates.DeviceUpdate{
-			ID:             newDevice.ID.SDUPEncode(),
-			AttributesDiff: sduptemplates.AttributeStateMap{},
-		}
+		deviceUpdate := sduptemplates.UpdateFromDeviceUpdate(newDevice.SpecToInitialUpdate())
 
-		if oldLight, ok := target.devices[newDevice.ID.SDUPEncode()]; ok {
-			log.Debug("Updating light", map[string]string{"light": fmt.Sprint(newDevice.ID.Index)})
-			//Previously known device
-			for key, newAttrVal := range newDevice.Attributes {
-				if oldAttrVal, ok := oldLight.Attributes[key]; ok {
-					if !oldAttrVal.State.Equivalent(newAttrVal.State) {
-						deviceUpdates.AttributesDiff[key] = newAttrVal.State
-					}
-					// TODO Might encounter diff in capabilities here
-				} else {
-					// TODO Added attributes?
-					log.Error("Found more capabilities?")
-				}
-			}
-			// TODO Lost attributes?
-
-		} else {
-			log.Info("Adding light", map[string]string{"light": fmt.Sprint(newDevice.ID.Index)})
-
-			// TODO capability updates
-			for id, attribute := range newDevice.Attributes {
-				deviceUpdates.AttributesDiff[id] = attribute.State
-			}
-		}
 		// TODO What about lost devices?
 		// Just update all detected lights
-		target.devices[newDevice.ID.SDUPEncode()] = newDevice
-		if len(deviceUpdates.AttributesDiff) > 0 {
-			target.updateChan <- deviceUpdates
-		}
+		target.updateChan <- deviceUpdate
+	}
+
+	hueGroups, err := target.getAllGroups()
+	if err != nil {
+		return err
+	}
+	for _, newGroup := range hueGroups {
+		groupUpdate := sduptemplates.UpdateFromDeviceGroupUpdate(newGroup.SpecToInitialUpdate())
+
+		target.updateChan <- groupUpdate
 	}
 
 	return nil
@@ -93,36 +83,30 @@ var ctColorLights = map[string]bool{
 	ExtendedColorLight: true,
 }
 
-//var ctColorLights = map[string]bool{}
-
-func createLightDevice(light huego.Light) HueDevice {
-	device := HueDevice{
-		ID: HueDeviceID{Type: "light", Index: light.ID},
-		Attributes: map[sduptemplates.AttributeKey]HueAttribute{
+func createLightDevice(light huego.Light) sduptemplates.DeviceSpec {
+	device := sduptemplates.DeviceSpec{
+		ID: HueDeviceID{Type: LIGHT, Index: light.ID}.SDUPEncode(),
+		Attributes: sduptemplates.AttributeStateMap{
 			sduptemplates.AttributeActive: {
-				State: sduptemplates.AttributeState{Boolean: &light.State.On},
+				Boolean: &light.State.On,
 			},
 		},
-		Capabilities: map[sduptemplates.CapabilityKey]HueCapability{
-			sduptemplates.CapabilityActivate:   TurnOnLight{},
-			sduptemplates.CapabilityDeactivate: TurnOffLight{},
+		Capabilities: sduptemplates.CapabilitySpecMap{
+			sduptemplates.CapabilityActivate:   sduptemplates.CapabilitySpec{},
+			sduptemplates.CapabilityDeactivate: sduptemplates.CapabilitySpec{},
 		},
 	}
 	// #########################
 	// # Description of device #
 	// #########################
-	device.Attributes[sduptemplates.AttributeDescription] = HueAttribute{
-		State: sduptemplates.AttributeState{
-			Text: &light.Name,
-		},
+	device.Attributes[sduptemplates.AttributeDescription] = sduptemplates.AttributeState{
+		Text: &light.Name,
 	}
 	// ############
 	// # UniqueID #
 	// ############
-	device.Attributes[sduptemplates.AttributeUniqueID] = HueAttribute{
-		State: sduptemplates.AttributeState{
-			Text: &light.UniqueID,
-		},
+	device.Attributes[sduptemplates.AttributeUniqueID] = sduptemplates.AttributeState{
+		Text: &light.UniqueID,
 	}
 
 	// #################
@@ -131,14 +115,8 @@ func createLightDevice(light huego.Light) HueDevice {
 	if xyColorLights[strings.ToLower(light.Type)] {
 		if len(light.State.Xy) == 2 {
 			// If the XY is set, use it as an attribute
-			device.Attributes[sduptemplates.AttributeColorXY] = HueAttribute{
-				State: sduptemplates.AttributeState{
-					KeyVal: &sduptemplates.KeyValContainer{
-						"x": light.State.Xy[0],
-						"y": light.State.Xy[1],
-					},
-				},
-			}
+			device.Attributes[sduptemplates.AttributeColorX] = sduptemplates.AttributeState{Numeric: &light.State.Xy[0]}
+			device.Attributes[sduptemplates.AttributeColorY] = sduptemplates.AttributeState{Numeric: &light.State.Xy[1]}
 
 		} else {
 			if len(light.State.Xy) != 0 {
@@ -146,17 +124,11 @@ func createLightDevice(light huego.Light) HueDevice {
 			}
 			//Attach attribute with nil color xy coordinates
 			//This happens when the colormode is not set to xy but rather eg. ct
-			device.Attributes[sduptemplates.AttributeColorXY] = HueAttribute{
-				State: sduptemplates.AttributeState{
-					KeyVal: &sduptemplates.KeyValContainer{
-						"x": nil,
-						"y": nil,
-					},
-				},
-			}
+			device.Attributes[sduptemplates.AttributeColorX] = sduptemplates.AttributeState{}
+			device.Attributes[sduptemplates.AttributeColorY] = sduptemplates.AttributeState{}
 		}
 		//Attach capability to change color with xy coordinates
-		device.Capabilities[sduptemplates.CapabilitySetColorXY] = XYColor{}
+		device.Capabilities[sduptemplates.CapabilitySetColorXY] = sduptemplates.CapabilitySpec{}
 	}
 	// #################
 	// # CT Color Mode #
@@ -164,14 +136,29 @@ func createLightDevice(light huego.Light) HueDevice {
 	if ctColorLights[strings.ToLower(light.Type)] {
 		//Attach color temperature attrbiute
 		ct := float32(light.State.Ct)
-		device.Attributes[sduptemplates.AttributeColorTemp] = HueAttribute{
-			State: sduptemplates.AttributeState{
-				Numeric: &ct,
-			},
+		device.Attributes[sduptemplates.AttributeColorTemp] = sduptemplates.AttributeState{
+			Numeric: &ct,
 		}
 		//Attach capability to change color temperature
-		device.Capabilities[sduptemplates.CapabilitySetColorTemp] = CTColor{}
+		device.Capabilities[sduptemplates.CapabilitySetColorTemp] = sduptemplates.CapabilitySpec{}
 	}
 
 	return device
+}
+
+func createDeviceGroup(group huego.Group) sduptemplates.DeviceGroupSpec {
+	g := sduptemplates.DeviceGroupSpec{
+		ID:        sduptemplates.DeviceGroupID(strconv.Itoa(group.ID)),
+		Name:      group.Name,
+		DeviceIDs: []sduptemplates.DeviceID{},
+	}
+	for _, lightId := range group.Lights {
+		lid, err := strconv.Atoi(lightId)
+		if err != nil {
+			// FIXME Do not panic; ignore or something
+			panic(err)
+		}
+		g.DeviceIDs = append(g.DeviceIDs, HueDeviceID{Type: LIGHT, Index: lid}.SDUPEncode())
+	}
+	return g
 }

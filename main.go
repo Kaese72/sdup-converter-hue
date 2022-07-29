@@ -7,9 +7,11 @@ import (
 	"os"
 
 	"github.com/Kaese72/sdup-converter-hue/config"
+	"github.com/Kaese72/sdup-converter-hue/devicestoreupdater"
 	"github.com/Kaese72/sdup-converter-hue/sduphue"
 	"github.com/Kaese72/sdup-lib/httpsdup"
 	log "github.com/Kaese72/sdup-lib/logging"
+	"github.com/Kaese72/sdup-lib/sdupcache"
 )
 
 func main() {
@@ -37,11 +39,20 @@ func main() {
 	if conf.DebugLogging != nil {
 		log.SetDebugLogging(*conf.DebugLogging)
 	}
-
-	SDUPServer := sduphue.InitSDUPHueTarget(conf.Hue.URL, conf.Hue.APIKey)
-	router := httpsdup.InitHTTPMux(SDUPServer)
+	myBasePath := fmt.Sprintf("%s:%d", conf.SDUP.ListenAddress, conf.SDUP.ListenPort)
+	hueTarget := sduphue.InitSDUPHueTarget(conf.Hue.URL, conf.Hue.APIKey)
+	sdupCache := sdupcache.NewSDUPCache(hueTarget)
+	router, subscriptions := httpsdup.InitHTTPMux(sdupCache)
 	log.Info("Starting HTTP Server")
-	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", conf.SDUP.ListenAddress, conf.SDUP.ListenPort), router); err != nil {
+	go func() {
+		err := devicestoreupdater.InitDeviceStoreUpdater(conf.EnrollDeviceStore, subscriptions)
+		if err != nil {
+			log.Error("Failed to initiate device store updater", map[string]string{"error": err.Error()})
+			return
+		}
+	}()
+	if err := http.ListenAndServe(myBasePath, router); err != nil {
 		log.Error(err.Error())
 	}
+
 }
