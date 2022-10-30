@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/Kaese72/sdup-converter-hue/config"
 	"github.com/Kaese72/sdup-converter-hue/devicestoreupdater"
@@ -12,18 +13,68 @@ import (
 	"github.com/Kaese72/sdup-lib/httpsdup"
 	log "github.com/Kaese72/sdup-lib/logging"
 	"github.com/Kaese72/sdup-lib/sdupcache"
+	"github.com/spf13/viper"
 )
 
 func main() {
-	var conf config.Config
+	myVip := viper.New()
+	// We have elected to no use AutomaticEnv() because of https://github.com/spf13/viper/issues/584
+	// myVip.AutomaticEnv()
+	// Set replaces to allow keys like "database.mongodb.connection-string"
+	myVip.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 
-	if err := json.NewDecoder(os.Stdin).Decode(&conf); err != nil {
+	// # Configuration file configuration
+	myVip.SetConfigName("config")
+	myVip.AddConfigPath(".")
+	myVip.AddConfigPath("99_local")
+	myVip.AddConfigPath("/etc/sdup-converter-hue/")
+	if err := myVip.ReadInConfig(); err != nil {
 		log.Error(err.Error())
+	}
+
+	// # API configuration
+	// Listen address
+	myVip.BindEnv("http-server.address")
+	myVip.SetDefault("http-server.address", "0.0.0.0")
+	// Listen port
+	myVip.BindEnv("http-server.port")
+	myVip.SetDefault("http-server.port", 8080)
+
+	// # Hue server configuration
+	// URL to server, eg. http://192.168.100.102:80/
+	myVip.BindEnv("hue.url")
+	// preconfigured api key string
+	myVip.BindEnv("hue.api-key")
+
+	// # Logging
+	myVip.BindEnv("debug-logging")
+	myVip.SetDefault("debug-logging", false)
+
+	// # Enroll Config
+	// ENROLL_STORE_STORE
+	myVip.BindEnv("enroll.store.store")
+	// ENROLL_STORE_BRIDGE_ADDRESS
+	myVip.BindEnv("enroll.store.bridge.address")
+	// ENROLL_STORE_BRIDGE_PORT
+	myVip.BindEnv("enroll.store.bridge.port")
+	// We set the default port since we know what port the container will be listening on,
+	// but we can not set a default on the address since we have not clue what IP it will have
+	myVip.SetDefault("enroll.store.bridge.port", 8080)
+
+	var conf config.Config
+	err := myVip.Unmarshal(&conf)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+
+	if err := myVip.WriteConfigAs("./config.used.yaml"); err != nil {
+		log.Error(err.Error())
+		return
 	}
 
 	if err := conf.Validate(); err != nil {
 		log.Error(err.Error())
-		conf.PopulateExample()
 		obj, err := json.Marshal(conf)
 		if err != nil {
 			log.Error(err.Error())
@@ -39,7 +90,7 @@ func main() {
 	if conf.DebugLogging != nil {
 		log.SetDebugLogging(*conf.DebugLogging)
 	}
-	myBasePath := fmt.Sprintf("%s:%d", conf.SDUP.ListenAddress, conf.SDUP.ListenPort)
+	myBasePath := fmt.Sprintf("%s:%d", conf.HTTPServer.ListenAddress, conf.HTTPServer.ListenPort)
 	hueTarget := sduphue.InitSDUPHueTarget(conf.Hue.URL, conf.Hue.APIKey)
 	sdupCache := sdupcache.NewSDUPCache(hueTarget)
 	router, subscriptions := httpsdup.InitHTTPMux(sdupCache)

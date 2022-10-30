@@ -17,7 +17,7 @@ import (
 func enrollBridge(config config.StoreEnrollmentConfig) (devicestoretemplates.Bridge, error) {
 	decodedBridge := devicestoretemplates.Bridge{}
 	bridgePayload, err := json.Marshal(devicestoretemplates.Bridge{
-		URI: config.EnrollURL,
+		URI: fmt.Sprintf("http://%s:%d/", config.Bridge.ListenAddress, config.Bridge.ListenPort),
 	})
 	if err != nil {
 		return decodedBridge, err
@@ -42,11 +42,6 @@ func enrollBridge(config config.StoreEnrollmentConfig) (devicestoretemplates.Bri
 }
 
 func InitDeviceStoreUpdater(config config.StoreEnrollmentConfig, subscriptions subscription.Subscriptions) error {
-	if !config.ShouldEnroll() {
-		logging.Info("Will not start device store updater")
-		return nil
-	}
-
 	myBridge, err := enrollBridge(config)
 	if err != nil {
 		return err

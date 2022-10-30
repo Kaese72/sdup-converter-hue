@@ -4,13 +4,8 @@ import "errors"
 
 //HueConfig contains configuration related to the Hue bridge
 type HueConfig struct {
-	URL    string `json:"url"`
-	APIKey string `json:"api-key"`
-}
-
-func (config *HueConfig) PopulateExample() {
-	config.URL = "scheme://host:port/"
-	config.APIKey = "Hue API key"
+	URL    string `mapstructure:"url"`
+	APIKey string `mapstructure:"api-key"`
 }
 
 //Validate checks whether all fields are appropriately set
