@@ -51,15 +51,15 @@ func main() {
 	myVip.SetDefault("debug-logging", false)
 
 	// # Enroll Config
-	// ENROLL_STORE_STORE
-	myVip.BindEnv("enroll.store.store")
+	// ENROLL_STORE
+	myVip.BindEnv("enroll.store")
 	// ENROLL_STORE_BRIDGE_ADDRESS
-	myVip.BindEnv("enroll.store.bridge.address")
+	myVip.BindEnv("enroll.bridge.address")
 	// ENROLL_STORE_BRIDGE_PORT
-	myVip.BindEnv("enroll.store.bridge.port")
+	myVip.BindEnv("enroll.bridge.port")
 	// We set the default port since we know what port the container will be listening on,
 	// but we can not set a default on the address since we have not clue what IP it will have
-	myVip.SetDefault("enroll.store.bridge.port", 8080)
+	myVip.SetDefault("enroll.bridge.port", 8080)
 
 	var conf config.Config
 	err := myVip.Unmarshal(&conf)
