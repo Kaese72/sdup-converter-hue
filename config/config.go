@@ -15,6 +15,10 @@ type ListenConfig struct {
 	ListenPort    int    `mapstructure:"port"`
 }
 
+func (conf ListenConfig) URL() string {
+	return fmt.Sprintf("http://%s:%d", conf.ListenAddress, conf.ListenPort)
+}
+
 func (config ListenConfig) Validate() error {
 	//FIXME validate ListenAddress
 	if config.ListenAddress == "" {
