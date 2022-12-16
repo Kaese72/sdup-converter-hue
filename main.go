@@ -53,13 +53,8 @@ func main() {
 	// # Enroll Config
 	// ENROLL_STORE
 	myVip.BindEnv("enroll.store")
-	// ENROLL_STORE_BRIDGE_ADDRESS
-	myVip.BindEnv("enroll.bridge.address")
-	// ENROLL_STORE_BRIDGE_PORT
-	myVip.BindEnv("enroll.bridge.port")
-	// We set the default port since we know what port the container will be listening on,
-	// but we can not set a default on the address since we have not clue what IP it will have
-	myVip.SetDefault("enroll.bridge.port", 8080)
+	// ENROLL_ADAPTER_KEY
+	myVip.BindEnv("enroll.adapter-key")
 
 	var conf config.Config
 	err := myVip.Unmarshal(&conf)
@@ -93,6 +88,7 @@ func main() {
 	myBasePath := fmt.Sprintf("%s:%d", conf.HTTPServer.ListenAddress, conf.HTTPServer.ListenPort)
 	hueTarget := sduphue.InitSDUPHueTarget(conf.Hue.URL, conf.Hue.APIKey)
 	sdupCache := sdupcache.NewSDUPCache(hueTarget)
+	// FIXME Race condition here where we might get updates on the subscriptions before the device store updater has created its subscription
 	router, subscriptions := httpsdup.InitHTTPMux(sdupCache)
 	log.Info("Starting HTTP Server")
 	go func() {

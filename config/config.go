@@ -6,8 +6,8 @@ import (
 )
 
 type StoreEnrollmentConfig struct {
-	StoreURL string       `mapstructure:"store"`
-	Bridge   ListenConfig `mapstructure:"bridge"`
+	StoreURL   string `mapstructure:"store"`
+	AdapterKey string `mapstructure:"adapter-key"`
 }
 
 type ListenConfig struct {
@@ -28,10 +28,11 @@ func (config ListenConfig) Validate() error {
 	if config.ListenPort < 0 || config.ListenPort > 65665 {
 		return fmt.Errorf("invalid port number, %d", config.ListenPort)
 	}
+	//FIXME Validate StoreEnrollmentConfig
 	return nil
 }
 
-//Config is the top level config structure
+// Config is the top level config structure
 type Config struct {
 	DebugLogging      *bool                 `mapstructure:"debug-logging"`
 	Hue               HueConfig             `mapstructure:"hue"`
@@ -39,7 +40,7 @@ type Config struct {
 	EnrollDeviceStore StoreEnrollmentConfig `mapstructure:"enroll"`
 }
 
-//Validate checks whether all fields are appropriately set
+// Validate checks whether all fields are appropriately set
 func (conf *Config) Validate() error {
 	if err := conf.HTTPServer.Validate(); err != nil {
 		return err

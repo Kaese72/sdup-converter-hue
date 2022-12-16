@@ -8,9 +8,7 @@ import (
 	"net/http"
 
 	"github.com/Kaese72/sdup-converter-hue/config"
-	"github.com/Kaese72/sdup-lib/devicestoretemplates"
 	"github.com/Kaese72/sdup-lib/logging"
-	"github.com/Kaese72/sdup-lib/sduptemplates"
 	"github.com/Kaese72/sdup-lib/subscription"
 )
 
@@ -24,24 +22,7 @@ func InitDeviceStoreUpdater(config config.StoreEnrollmentConfig, subscriptions s
 			// This is a device update and not a group update
 			continue
 		}
-		attributes := map[sduptemplates.AttributeKey]devicestoretemplates.AttributeState{}
-		for attributeKey, attribute := range dUpdate.AttributesDiff {
-			attributes[attributeKey] = devicestoretemplates.AttributeState{
-				Boolean: attribute.Boolean,
-				Numeric: attribute.Numeric,
-				Text:    attribute.Text,
-			}
-		}
-		capabilities := map[sduptemplates.CapabilityKey]devicestoretemplates.Capability{}
-		for capKey := range dUpdate.CapabilityDiff {
-			capabilities[capKey] = devicestoretemplates.Capability{}
-		}
-		payload := devicestoretemplates.Device{
-			Identifier:   string(dUpdate.ID),
-			Attributes:   attributes,
-			Capabilities: capabilities,
-		}
-		bPayload, err := json.Marshal(payload)
+		bPayload, err := json.Marshal(dUpdate.UpdateToDevice())
 		if err != nil {
 			logging.Error("Failed to marshal struct to JSON to send to device store", map[string]string{
 				"error": err.Error(),
@@ -53,7 +34,7 @@ func InitDeviceStoreUpdater(config config.StoreEnrollmentConfig, subscriptions s
 			logging.Error("Failed to create request", map[string]string{"error": err.Error()})
 			continue
 		}
-		devicePayload.Header.Set("Bridge-Key", config.Bridge.URL())
+		devicePayload.Header.Set("Bridge-Key", config.AdapterKey)
 		resp, err := http.DefaultClient.Do(
 			devicePayload,
 		)
