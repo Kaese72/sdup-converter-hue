@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Kaese72/sdup-lib/devicestoretemplates"
 	log "github.com/Kaese72/sdup-lib/logging"
 	"github.com/Kaese72/sdup-lib/sduptemplates"
 	"github.com/amimof/huego"
@@ -25,13 +26,13 @@ type HueDeviceID struct {
 	Type  HueDeviceIDType
 }
 
-//SDUPEncode converts the index and type into a DeviceID
+// SDUPEncode converts the index and type into a DeviceID
 // It is a base64 encoded string on the format "<type>/<index>"
-func (id HueDeviceID) SDUPEncode() sduptemplates.DeviceID {
-	return sduptemplates.DeviceID(base64.URLEncoding.EncodeToString([]byte(fmt.Sprintf("%s/%d", id.Type, id.Index))))
+func (id HueDeviceID) SDUPEncode() string {
+	return base64.URLEncoding.EncodeToString([]byte(fmt.Sprintf("%s/%d", id.Type, id.Index)))
 }
 
-func parseHueDeviceID(id sduptemplates.DeviceID) (HueDeviceID, error) {
+func parseHueDeviceID(id string) (HueDeviceID, error) {
 	res, err := base64.URLEncoding.DecodeString(string(id))
 	if err != nil {
 		log.Debug("Failed base64 decode id, resulting in no such device", map[string]string{"VALUE": string(id)})
@@ -106,7 +107,7 @@ func (target *SDUPHueTarget) Groups() (devices []sduptemplates.DeviceGroupSpec, 
 	return target.getAllGroups()
 }
 
-func (target *SDUPHueTarget) TriggerCapability(deviceID sduptemplates.DeviceID, capabilityKey sduptemplates.CapabilityKey, argument sduptemplates.CapabilityArgument) error {
+func (target *SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey devicestoretemplates.CapabilityKey, argument devicestoretemplates.CapabilityArgs) error {
 	capability, ok := capRegistry[capabilityKey]
 	if !ok {
 		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing
@@ -128,7 +129,7 @@ func (target *SDUPHueTarget) TriggerCapability(deviceID sduptemplates.DeviceID, 
 	}
 }
 
-func (target *SDUPHueTarget) GTriggerCapability(groupId sduptemplates.DeviceGroupID, capabilityKey sduptemplates.CapabilityKey, argument sduptemplates.CapabilityArgument) error {
+func (target *SDUPHueTarget) GTriggerCapability(groupId sduptemplates.DeviceGroupID, capabilityKey devicestoretemplates.CapabilityKey, argument devicestoretemplates.CapabilityArgs) error {
 	capability, ok := gCapRegistry[capabilityKey]
 	if !ok {
 		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing

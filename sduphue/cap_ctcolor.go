@@ -3,21 +3,21 @@ package sduphue
 import (
 	"errors"
 
-	"github.com/Kaese72/sdup-lib/sduptemplates"
+	"github.com/Kaese72/sdup-lib/devicestoretemplates"
 	"github.com/amimof/huego"
 	"github.com/mitchellh/mapstructure"
 )
 
 func init() {
-	capRegistry[sduptemplates.CapabilitySetColorTemp] = TriggerSetCTColor
-	gCapRegistry[sduptemplates.CapabilitySetColorTemp] = GTriggerSetCTColor
+	capRegistry[CapabilitySetColorTemp] = TriggerSetCTColor
+	gCapRegistry[CapabilitySetColorTemp] = GTriggerSetCTColor
 }
 
 type CTColorArgs struct {
 	Ct *float32 `mapstructure:"ct"`
 }
 
-func TriggerSetCTColor(id int, args sduptemplates.CapabilityArgument) error {
+func TriggerSetCTColor(id int, args devicestoretemplates.CapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs CTColorArgs
@@ -32,7 +32,7 @@ func TriggerSetCTColor(id int, args sduptemplates.CapabilityArgument) error {
 	return err
 }
 
-func GTriggerSetCTColor(id int, args sduptemplates.CapabilityArgument) error {
+func GTriggerSetCTColor(id int, args devicestoretemplates.CapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs CTColorArgs

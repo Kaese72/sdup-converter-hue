@@ -22,7 +22,7 @@ func InitDeviceStoreUpdater(config config.StoreEnrollmentConfig, subscriptions s
 			// This is a device update and not a group update
 			continue
 		}
-		bPayload, err := json.Marshal(dUpdate.UpdateToDevice())
+		bPayload, err := json.Marshal(dUpdate.DeviceStorePatch())
 		if err != nil {
 			logging.Error("Failed to marshal struct to JSON to send to device store", map[string]string{
 				"error": err.Error(),

@@ -3,14 +3,14 @@ package sduphue
 import (
 	"errors"
 
-	"github.com/Kaese72/sdup-lib/sduptemplates"
+	"github.com/Kaese72/sdup-lib/devicestoretemplates"
 	"github.com/amimof/huego"
 	"github.com/mitchellh/mapstructure"
 )
 
 func init() {
-	capRegistry[sduptemplates.CapabilitySetColorXY] = TriggerSetXYColor
-	gCapRegistry[sduptemplates.CapabilitySetColorXY] = GTriggerSetXYColor
+	capRegistry[CapabilitySetColorXY] = TriggerSetXYColor
+	gCapRegistry[CapabilitySetColorXY] = GTriggerSetXYColor
 }
 
 type XYColorArgs struct {
@@ -18,7 +18,7 @@ type XYColorArgs struct {
 	Y *float32 `mapstructure:"y"`
 }
 
-func TriggerSetXYColor(id int, args sduptemplates.CapabilityArgument) error {
+func TriggerSetXYColor(id int, args devicestoretemplates.CapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs XYColorArgs
@@ -37,7 +37,7 @@ func TriggerSetXYColor(id int, args sduptemplates.CapabilityArgument) error {
 	return err
 }
 
-func GTriggerSetXYColor(id int, args sduptemplates.CapabilityArgument) error {
+func GTriggerSetXYColor(id int, args devicestoretemplates.CapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs XYColorArgs

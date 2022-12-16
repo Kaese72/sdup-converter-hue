@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Kaese72/sdup-lib/devicestoretemplates"
 	log "github.com/Kaese72/sdup-lib/logging"
 	"github.com/Kaese72/sdup-lib/sduptemplates"
 	"github.com/amimof/huego"
@@ -61,7 +62,7 @@ func (target *SDUPHueTarget) UpdateEverything() error {
 	return nil
 }
 
-//Not lowercase according to docs, but it seems like strings are not properly speced
+// Not lowercase according to docs, but it seems like strings are not properly speced
 const (
 	OnOffLight         = "on/off light"
 	DimmableLight      = "dimmable light"
@@ -70,8 +71,8 @@ const (
 	ExtendedColorLight = "extended color light"
 )
 
-//xyColorLights contains the different lights that support xy color control
-//FIXME I might be able to tell if the light has uspport of xy color mode by checking the presence of "xy" in the state retrieved form the bridge
+// xyColorLights contains the different lights that support xy color control
+// FIXME I might be able to tell if the light has uspport of xy color mode by checking the presence of "xy" in the state retrieved form the bridge
 var xyColorLights = map[string]bool{
 	ColorLight:         true,
 	ExtendedColorLight: true,
@@ -83,29 +84,56 @@ var ctColorLights = map[string]bool{
 	ExtendedColorLight: true,
 }
 
+const (
+	//AttributeActive represents whether the device is currently on or off
+	AttributeActive devicestoretemplates.AttributeKey = "active"
+	//AttributeColorXY represents the primary color of the device, represented by xy coordinates
+	AttributeColorX devicestoretemplates.AttributeKey = "colorx"
+	AttributeColorY devicestoretemplates.AttributeKey = "colory"
+	//AttributeColorTemp represents the primary color of the device, represented by xy coordinates
+	AttributeColorTemp devicestoretemplates.AttributeKey = "colorct"
+	//AttributeDescription is a readable description, presentable to a user. Should not be used to identify the device
+	AttributeDescription devicestoretemplates.AttributeKey = "description"
+	//AttributeUniqueID globally identifes a device across bridges. eg. MAC addresses
+	AttributeUniqueID devicestoretemplates.AttributeKey = "uniqueID"
+	//AttributeGroups globally identifies group names a device is part of (Groups generally do not have a unique ID, so strings is the best we have)
+	AttributeGroups devicestoretemplates.AttributeKey = "groups"
+)
+
+const (
+	//CapabilityActivate means the associated attribute can be activated
+	CapabilityActivate devicestoretemplates.CapabilityKey = "activate"
+	//CapabilityDeactivate means the associated attribute can be deactivated
+	CapabilityDeactivate devicestoretemplates.CapabilityKey = "deactivate"
+	//CapabilitySetColorXY means that you can change the x and y coordinates in color mode
+	CapabilitySetColorXY devicestoretemplates.CapabilityKey = "setcolorxy"
+	//CapabilitySetColorTemp means that you can change the temperature in color mode
+	CapabilitySetColorTemp devicestoretemplates.CapabilityKey = "setcolorct"
+)
+
 func createLightDevice(light huego.Light) sduptemplates.DeviceSpec {
 	device := sduptemplates.DeviceSpec{
 		ID: HueDeviceID{Type: LIGHT, Index: light.ID}.SDUPEncode(),
-		Attributes: sduptemplates.AttributeStateMap{
-			sduptemplates.AttributeActive: {
+		Attributes: map[devicestoretemplates.AttributeKey]devicestoretemplates.AttributeState{
+			AttributeActive: {
 				Boolean: &light.State.On,
 			},
 		},
-		Capabilities: sduptemplates.CapabilitySpecMap{
-			sduptemplates.CapabilityActivate:   sduptemplates.CapabilitySpec{},
-			sduptemplates.CapabilityDeactivate: sduptemplates.CapabilitySpec{},
+		Capabilities: map[devicestoretemplates.CapabilityKey]devicestoretemplates.Capability{
+			CapabilityActivate:   {},
+			CapabilityDeactivate: {},
 		},
 	}
 	// #########################
 	// # Description of device #
 	// #########################
-	device.Attributes[sduptemplates.AttributeDescription] = sduptemplates.AttributeState{
+	device.Attributes[AttributeDescription] = devicestoretemplates.AttributeState{
 		Text: &light.Name,
 	}
 	// ############
 	// # UniqueID #
 	// ############
-	device.Attributes[sduptemplates.AttributeUniqueID] = sduptemplates.AttributeState{
+	device.Attributes[AttributeUniqueID] = devicestoretemplates.AttributeState{
 		Text: &light.UniqueID,
 	}
 
@@ -115,8 +143,8 @@ func createLightDevice(light huego.Light) sduptemplates.DeviceSpec {
 	if xyColorLights[strings.ToLower(light.Type)] {
 		if len(light.State.Xy) == 2 {
 			// If the XY is set, use it as an attribute
-			device.Attributes[sduptemplates.AttributeColorX] = sduptemplates.AttributeState{Numeric: &light.State.Xy[0]}
-			device.Attributes[sduptemplates.AttributeColorY] = sduptemplates.AttributeState{Numeric: &light.State.Xy[1]}
+			device.Attributes[AttributeColorX] = devicestoretemplates.AttributeState{Numeric: &light.State.Xy[0]}
+			device.Attributes[AttributeColorY] = devicestoretemplates.AttributeState{Numeric: &light.State.Xy[1]}
 
 		} else {
 			if len(light.State.Xy) != 0 {
@@ -124,11 +152,11 @@ func createLightDevice(light huego.Light) sduptemplates.DeviceSpec {
 			}
 			//Attach attribute with nil color xy coordinates
 			//This happens when the colormode is not set to xy but rather eg. ct
-			device.Attributes[sduptemplates.AttributeColorX] = sduptemplates.AttributeState{}
-			device.Attributes[sduptemplates.AttributeColorY] = sduptemplates.AttributeState{}
+			device.Attributes[AttributeColorX] = devicestoretemplates.AttributeState{}
+			device.Attributes[AttributeColorY] = devicestoretemplates.AttributeState{}
 		}
 		//Attach capability to change color with xy coordinates
-		device.Capabilities[sduptemplates.CapabilitySetColorXY] = sduptemplates.CapabilitySpec{}
+		device.Capabilities[CapabilitySetColorXY] = devicestoretemplates.Capability{}
 	}
 	// #################
 	// # CT Color Mode #
@@ -136,11 +164,11 @@ func createLightDevice(light huego.Light) sduptemplates.DeviceSpec {
 	if ctColorLights[strings.ToLower(light.Type)] {
 		//Attach color temperature attrbiute
 		ct := float32(light.State.Ct)
-		device.Attributes[sduptemplates.AttributeColorTemp] = sduptemplates.AttributeState{
+		device.Attributes[AttributeColorTemp] = devicestoretemplates.AttributeState{
 			Numeric: &ct,
 		}
 		//Attach capability to change color temperature
-		device.Capabilities[sduptemplates.CapabilitySetColorTemp] = sduptemplates.CapabilitySpec{}
+		device.Capabilities[CapabilitySetColorTemp] = devicestoretemplates.Capability{}
 	}
 
 	return device
@@ -150,7 +178,7 @@ func createDeviceGroup(group huego.Group) sduptemplates.DeviceGroupSpec {
 	g := sduptemplates.DeviceGroupSpec{
 		ID:        sduptemplates.DeviceGroupID(strconv.Itoa(group.ID)),
 		Name:      group.Name,
-		DeviceIDs: []sduptemplates.DeviceID{},
+		DeviceIDs: []string{},
 	}
 	for _, lightId := range group.Lights {
 		lid, err := strconv.Atoi(lightId)
