@@ -1,7 +1,7 @@
 package sduphue
 
 import (
-	"github.com/Kaese72/sdup-lib/devicestoretemplates"
+	devicestoretemplates "github.com/Kaese72/device-store/rest/models"
 )
 
 // capRegistry contains device capability functions

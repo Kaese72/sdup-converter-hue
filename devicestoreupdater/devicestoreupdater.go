@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/Kaese72/huemie-lib/logging"
 	"github.com/Kaese72/sdup-converter-hue/config"
-	"github.com/Kaese72/sdup-lib/logging"
 	"github.com/Kaese72/sdup-lib/subscription"
 )
 

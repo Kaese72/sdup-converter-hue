@@ -3,7 +3,7 @@ package sduphue
 import (
 	"errors"
 
-	"github.com/Kaese72/sdup-lib/devicestoretemplates"
+	devicestoretemplates "github.com/Kaese72/device-store/rest/models"
 	"github.com/amimof/huego"
 	"github.com/mitchellh/mapstructure"
 )

@@ -7,11 +7,11 @@ import (
 	"os"
 	"strings"
 
+	log "github.com/Kaese72/huemie-lib/logging"
 	"github.com/Kaese72/sdup-converter-hue/config"
 	"github.com/Kaese72/sdup-converter-hue/devicestoreupdater"
 	"github.com/Kaese72/sdup-converter-hue/sduphue"
 	"github.com/Kaese72/sdup-lib/httpsdup"
-	log "github.com/Kaese72/sdup-lib/logging"
 	"github.com/Kaese72/sdup-lib/sdupcache"
 	"github.com/spf13/viper"
 )
