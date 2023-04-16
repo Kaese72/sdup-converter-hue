@@ -94,7 +94,7 @@ func main() {
 	go func() {
 		err := devicestoreupdater.InitDeviceStoreUpdater(conf.EnrollDeviceStore, subscriptions)
 		if err != nil {
-			log.Error("Failed to initiate device store updater", map[string]string{"error": err.Error()})
+			log.Error("Failed to initiate device store updater", map[string]interface{}{"error": err.Error()})
 			return
 		}
 	}()

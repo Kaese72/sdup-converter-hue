@@ -24,15 +24,15 @@ func InitDeviceStoreUpdater(config config.StoreEnrollmentConfig, subscriptions s
 		}
 		bPayload, err := json.Marshal(dUpdate.DeviceStorePatch())
 		if err != nil {
-			logging.Error("Failed to marshal struct to JSON to send to device store", map[string]string{
+			logging.Error("Failed to marshal struct to JSON to send to device store", map[string]interface{}{
 				"error": err.Error(),
 			})
 			continue
 		}
-		logging.Error("Sending blob to device store", map[string]string{"blob": string(bPayload)})
+		logging.Error("Sending blob to device store", map[string]interface{}{"blob": string(bPayload)})
 		devicePayload, err := http.NewRequest("POST", fmt.Sprintf("%s/rest/v0/devices", config.StoreURL), bytes.NewBuffer(bPayload))
 		if err != nil {
-			logging.Error("Failed to create request", map[string]string{"error": err.Error()})
+			logging.Error("Failed to create request", map[string]interface{}{"error": err.Error()})
 			continue
 		}
 		devicePayload.Header.Set("Bridge-Key", config.AdapterKey)
@@ -40,16 +40,16 @@ func InitDeviceStoreUpdater(config config.StoreEnrollmentConfig, subscriptions s
 			devicePayload,
 		)
 		if err != nil {
-			logging.Error("Failed to http.Do request", map[string]string{"error": err.Error()})
+			logging.Error("Failed to http.Do request", map[string]interface{}{"error": err.Error()})
 			continue
 		}
 		respBody, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			logging.Error("Failed to read response body on response", map[string]string{"error": err.Error()})
+			logging.Error("Failed to read response body on response", map[string]interface{}{"error": err.Error()})
 			continue
 		}
 
-		logging.Info("Sent payload to device store", map[string]string{"Response Code": resp.Status, "Response Body": string(respBody)})
+		logging.Info("Sent payload to device store", map[string]interface{}{"Response Code": resp.Status, "Response Body": string(respBody)})
 	}
 	return nil
 }

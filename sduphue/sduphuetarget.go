@@ -35,19 +35,19 @@ func (id HueDeviceID) SDUPEncode() string {
 func parseHueDeviceID(id string) (HueDeviceID, error) {
 	res, err := base64.URLEncoding.DecodeString(string(id))
 	if err != nil {
-		log.Debug("Failed base64 decode id, resulting in no such device", map[string]string{"VALUE": string(id)})
+		log.Debug("Failed base64 decode id, resulting in no such device", map[string]interface{}{"VALUE": string(id)})
 		return HueDeviceID{}, sduptemplates.NoSuchDevice
 	}
 
 	splitString := strings.SplitN(string(res), "/", 2)
 	if len(splitString) < 2 {
-		log.Debug("Failed to split device ID on /, resulting in no such device", map[string]string{"VALUE": string(res), "LEN": strconv.Itoa(len(splitString))})
+		log.Debug("Failed to split device ID on /, resulting in no such device", map[string]interface{}{"VALUE": string(res), "LEN": strconv.Itoa(len(splitString))})
 		return HueDeviceID{}, sduptemplates.NoSuchDevice
 	}
 
 	index, err := strconv.Atoi(splitString[1])
 	if err != nil {
-		log.Debug("Failed to parse hue index, resulting in no such device", map[string]string{"VALUE": splitString[1]})
+		log.Debug("Failed to parse hue index, resulting in no such device", map[string]interface{}{"VALUE": splitString[1]})
 		return HueDeviceID{}, sduptemplates.NoSuchDevice
 	}
 
@@ -64,7 +64,7 @@ type HueGroupID struct {
 func parseHueGroupID(id sduptemplates.DeviceGroupID) (HueGroupID, error) {
 	intId, err := strconv.Atoi(string(id))
 	if err != nil {
-		log.Debug("Failed to atoi group id, leading to error", map[string]string{"VALUE": string(id)})
+		log.Debug("Failed to atoi group id, leading to error", map[string]interface{}{"VALUE": string(id)})
 		return HueGroupID{}, err
 	}
 	return HueGroupID{
@@ -111,7 +111,7 @@ func (target *SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey de
 	capability, ok := capRegistry[capabilityKey]
 	if !ok {
 		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing
-		log.Debug("Could not find capability", map[string]string{"device": string(deviceID), "capability": string(capabilityKey)})
+		log.Debug("Could not find capability", map[string]interface{}{"device": string(deviceID), "capability": string(capabilityKey)})
 		return sduptemplates.NoSuchCapability
 	}
 
@@ -133,7 +133,7 @@ func (target *SDUPHueTarget) GTriggerCapability(groupId sduptemplates.DeviceGrou
 	capability, ok := gCapRegistry[capabilityKey]
 	if !ok {
 		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing
-		log.Debug("Could not find group capability", map[string]string{"capability": string(capabilityKey)})
+		log.Debug("Could not find group capability", map[string]interface{}{"capability": string(capabilityKey)})
 		return sduptemplates.NoSuchCapability
 	}
 
