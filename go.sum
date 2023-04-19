@@ -198,6 +198,9 @@ github.com/Kaese72/device-store v0.0.17 h1:+5xrVAXQbYebWXZIslIhiQVmqND6DGO0BTx/Y
 github.com/Kaese72/device-store v0.0.17/go.mod h1:nTDEe1b6zrWiDTAWMTs5AAMtfeDeT0nUZSTwKxN235w=
 github.com/Kaese72/huemie-lib v0.0.1 h1:Rxw9UEgcWcTuCdJY/QfNGFxCxnTqhxXMxRHUFF8nwNI=
 github.com/Kaese72/huemie-lib v0.0.1/go.mod h1:GgQ2M08uvgRm5ym4pfbJIjbOQmv3WyKJON1k9voUfNg=
+github.com/Kaese72/sdup-lib v0.0.3/go.mod h1:cx3owaCSTJYbHkPjcnBenjncQdQa8OvhRU2cyObxYCo=
+github.com/Kaese72/sdup-lib v0.0.11 h1:4d0flHGiQ3Khp/JStsKtNzGZL0vqnHctjRZm2cq/PBc=
+github.com/Kaese72/sdup-lib v0.0.11/go.mod h1:9m+RjdVJ8g1wCVISJZzXOlC5rgPP3YIG7WVnvesdTvs=
 github.com/NYTimes/gziphandler v0.0.0-20170623195520-56545f4a5d46/go.mod h1:3wb06e3pkSAbeQ52E9H9iFoQsEEwGN64994WTCIhntQ=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/PuerkitoBio/purell v1.1.1/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=

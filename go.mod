@@ -12,4 +12,4 @@ require (
 
 )
 
-replace github.com/Kaese72/sdup-lib => ../sdup-lib
+// replace github.com/Kaese72/sdup-lib => ../sdup-lib
