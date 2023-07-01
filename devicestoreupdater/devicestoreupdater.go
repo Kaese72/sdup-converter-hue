@@ -30,7 +30,7 @@ func InitDeviceStoreUpdater(config config.StoreEnrollmentConfig, subscriptions s
 			continue
 		}
 		logging.Error("Sending blob to device store", map[string]interface{}{"blob": string(bPayload)})
-		devicePayload, err := http.NewRequest("POST", fmt.Sprintf("%s/rest/v0/devices", config.StoreURL), bytes.NewBuffer(bPayload))
+		devicePayload, err := http.NewRequest("POST", fmt.Sprintf("%s/device-store/v0/devices", config.StoreURL), bytes.NewBuffer(bPayload))
 		if err != nil {
 			logging.Error("Failed to create request", map[string]interface{}{"error": err.Error()})
 			continue
