@@ -101,5 +101,4 @@ func main() {
 	if err := http.ListenAndServe(myBasePath, router); err != nil {
 		log.Error(err.Error())
 	}
-
 }

@@ -176,17 +176,21 @@ func createLightDevice(light huego.Light) sduptemplates.DeviceSpec {
 
 func createDeviceGroup(group huego.Group) sduptemplates.DeviceGroupSpec {
 	g := sduptemplates.DeviceGroupSpec{
-		ID:        sduptemplates.DeviceGroupID(strconv.Itoa(group.ID)),
-		Name:      group.Name,
-		DeviceIDs: []string{},
+		ID:   sduptemplates.DeviceGroupID(strconv.Itoa(group.ID)),
+		Name: group.Name,
+		// DeviceIDs: []string{},
+		Capabilities: map[devicestoretemplates.CapabilityKey]devicestoretemplates.Capability{
+			CapabilityActivate:   {},
+			CapabilityDeactivate: {},
+		},
 	}
-	for _, lightId := range group.Lights {
-		lid, err := strconv.Atoi(lightId)
-		if err != nil {
-			// FIXME Do not panic; ignore or something
-			panic(err)
-		}
-		g.DeviceIDs = append(g.DeviceIDs, HueDeviceID{Type: LIGHT, Index: lid}.SDUPEncode())
-	}
+	// for _, lightId := range group.Lights {
+	// 	lid, err := strconv.Atoi(lightId)
+	// 	if err != nil {
+	// 		// FIXME Do not panic; ignore or something
+	// 		panic(err)
+	// 	}
+	// 	g.DeviceIDs = append(g.DeviceIDs, HueDeviceID{Type: LIGHT, Index: lid}.SDUPEncode())
+	// }
 	return g
 }
