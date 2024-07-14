@@ -3,12 +3,9 @@ package config
 import (
 	"errors"
 	"fmt"
-)
 
-type StoreEnrollmentConfig struct {
-	StoreURL   string `mapstructure:"store"`
-	AdapterKey string `mapstructure:"adapter-key"`
-}
+	"github.com/Kaese72/sdup-lib/deviceupdates"
+)
 
 type ListenConfig struct {
 	ListenAddress string `mapstructure:"address"`
@@ -20,7 +17,6 @@ func (conf ListenConfig) URL() string {
 }
 
 func (config ListenConfig) Validate() error {
-	//FIXME validate ListenAddress
 	if config.ListenAddress == "" {
 		return errors.New("empty listen address")
 	}
@@ -34,10 +30,10 @@ func (config ListenConfig) Validate() error {
 
 // Config is the top level config structure
 type Config struct {
-	DebugLogging      *bool                 `mapstructure:"debug-logging"`
-	Hue               HueConfig             `mapstructure:"hue"`
-	HTTPServer        ListenConfig          `mapstructure:"http-server"`
-	EnrollDeviceStore StoreEnrollmentConfig `mapstructure:"enroll"`
+	DebugLogging      *bool                               `mapstructure:"debug-logging"`
+	Hue               HueConfig                           `mapstructure:"hue"`
+	HTTPServer        ListenConfig                        `mapstructure:"http-server"`
+	EnrollDeviceStore deviceupdates.StoreEnrollmentConfig `mapstructure:"enroll"`
 }
 
 // Validate checks whether all fields are appropriately set

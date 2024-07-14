@@ -9,10 +9,9 @@ import (
 
 	log "github.com/Kaese72/huemie-lib/logging"
 	"github.com/Kaese72/sdup-converter-hue/config"
-	"github.com/Kaese72/sdup-converter-hue/devicestoreupdater"
 	"github.com/Kaese72/sdup-converter-hue/sduphue"
-	"github.com/Kaese72/sdup-lib/httpsdup"
-	"github.com/Kaese72/sdup-lib/sdupcache"
+	"github.com/Kaese72/sdup-lib/capabilitytriggerer"
+	"github.com/Kaese72/sdup-lib/deviceupdates"
 	"github.com/spf13/viper"
 )
 
@@ -87,17 +86,13 @@ func main() {
 	}
 	myBasePath := fmt.Sprintf("%s:%d", conf.HTTPServer.ListenAddress, conf.HTTPServer.ListenPort)
 	hueTarget := sduphue.InitSDUPHueTarget(conf.Hue.URL, conf.Hue.APIKey)
-	sdupCache := sdupcache.NewSDUPCache(hueTarget)
-	// FIXME Race condition here where we might get updates on the subscriptions before the device store updater has created its subscription
-	router, subscriptions := httpsdup.InitHTTPMux(sdupCache)
+	router := capabilitytriggerer.InitCapabilityTriggerMux(hueTarget)
 	log.Info("Starting HTTP Server")
-	go func() {
-		err := devicestoreupdater.InitDeviceStoreUpdater(conf.EnrollDeviceStore, subscriptions)
-		if err != nil {
-			log.Error("Failed to initiate device store updater", map[string]interface{}{"error": err.Error()})
-			return
-		}
-	}()
+	err = deviceupdates.InitDeviceUpdater(conf.EnrollDeviceStore, hueTarget)
+	if err != nil {
+		log.Error("Failed to initiate device store updater", map[string]interface{}{"error": err.Error()})
+		return
+	}
 	if err := http.ListenAndServe(myBasePath, router); err != nil {
 		log.Error(err.Error())
 	}

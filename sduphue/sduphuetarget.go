@@ -7,8 +7,9 @@ import (
 	"strings"
 	"time"
 
-	devicestoretemplates "github.com/Kaese72/device-store/rest/models"
+	"github.com/Kaese72/device-store/rest/models"
 	log "github.com/Kaese72/huemie-lib/logging"
+	"github.com/Kaese72/sdup-lib/deviceupdates"
 	"github.com/Kaese72/sdup-lib/sduptemplates"
 	"github.com/amimof/huego"
 )
@@ -57,57 +58,31 @@ func parseHueDeviceID(id string) (HueDeviceID, error) {
 	}, nil
 }
 
-type HueGroupID struct {
-	Index int
-}
-
-func parseHueGroupID(id sduptemplates.DeviceGroupID) (HueGroupID, error) {
-	intId, err := strconv.Atoi(string(id))
-	if err != nil {
-		log.Debug("Failed to atoi group id, leading to error", map[string]interface{}{"VALUE": string(id)})
-		return HueGroupID{}, err
-	}
-	return HueGroupID{
-		Index: intId,
-	}, nil
-}
-
 type SDUPHueTarget struct {
-	updateChan  chan sduptemplates.Update
-	initialized bool
 }
 
-func (target *SDUPHueTarget) Initialize() (channel chan sduptemplates.Update, err error) {
-	if target.initialized {
-		panic("Hue target already initialized")
-	}
-
+func (target SDUPHueTarget) Initialize() (chan deviceupdates.Update, error) {
 	// Start updater
+	channel := make(chan deviceupdates.Update)
 	go func() {
 		timer := time.NewTicker(2 * time.Second)
-		//FIXME
 		defer timer.Stop()
 		for range timer.C {
-			err := target.UpdateEverything()
+			hueDevices, err := target.getAllDevices()
 			if err != nil {
-				log.Error(err.Error())
+				log.Error("Error when fetching devices", map[string]interface{}{"error": err.Error()})
+			} else {
+				for _, newDevice := range hueDevices {
+					channel <- deviceupdates.Update{Device: newDevice}
+				}
 			}
+			timer.Reset(2 * time.Second)
 		}
 	}()
-	target.initialized = true
-	channel = target.updateChan
-	return
+	return channel, nil
 }
 
-func (target *SDUPHueTarget) Devices() (devices []sduptemplates.DeviceSpec, err error) {
-	return target.getAllDevices()
-}
-
-func (target *SDUPHueTarget) Groups() (devices []sduptemplates.DeviceGroupSpec, err error) {
-	return target.getAllGroups()
-}
-
-func (target *SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey devicestoretemplates.CapabilityKey, argument devicestoretemplates.CapabilityArgs) error {
+func (target SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey string, argument models.CapabilityArgs) error {
 	capability, ok := capRegistry[capabilityKey]
 	if !ok {
 		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing
@@ -129,27 +104,8 @@ func (target *SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey de
 	}
 }
 
-func (target *SDUPHueTarget) GTriggerCapability(groupId sduptemplates.DeviceGroupID, capabilityKey devicestoretemplates.CapabilityKey, argument devicestoretemplates.CapabilityArgs) error {
-	capability, ok := gCapRegistry[capabilityKey]
-	if !ok {
-		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing
-		log.Debug("Could not find group capability", map[string]interface{}{"capability": string(capabilityKey)})
-		return sduptemplates.NoSuchCapability
-	}
-
-	hueGroupId, err := parseHueGroupID(groupId)
-	if err != nil {
-		return err
-	}
-
-	return capability(hueGroupId.Index, argument)
-
-}
-
-func InitSDUPHueTarget(URL, APIKey string) sduptemplates.SDUPTarget {
+func InitSDUPHueTarget(URL, APIKey string) SDUPHueTarget {
 	bridge = huego.New(URL, APIKey)
-	target := &SDUPHueTarget{
-		updateChan: make(chan sduptemplates.Update, 10),
-	}
+	target := SDUPHueTarget{}
 	return target
 }
