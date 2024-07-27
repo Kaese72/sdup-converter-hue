@@ -17,7 +17,7 @@ type CTColorArgs struct {
 	Ct *float32 `mapstructure:"ct"`
 }
 
-func TriggerSetCTColor(id int, args devicestoretemplates.CapabilityArgs) error {
+func TriggerSetCTColor(id int, args devicestoretemplates.DeviceCapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs CTColorArgs
@@ -32,7 +32,7 @@ func TriggerSetCTColor(id int, args devicestoretemplates.CapabilityArgs) error {
 	return err
 }
 
-func GTriggerSetCTColor(id int, args devicestoretemplates.CapabilityArgs) error {
+func GTriggerSetCTColor(id int, args devicestoretemplates.GroupCapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs CTColorArgs

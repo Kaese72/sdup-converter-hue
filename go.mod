@@ -3,9 +3,9 @@ module github.com/Kaese72/sdup-converter-hue
 go 1.22
 
 require (
-	github.com/Kaese72/device-store v0.0.43
+	github.com/Kaese72/device-store v0.0.47
 	github.com/Kaese72/huemie-lib v0.0.5
-	github.com/Kaese72/sdup-lib v0.0.13
+	github.com/Kaese72/sdup-lib v0.0.14
 	github.com/amimof/huego v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/viper v1.16.0
@@ -30,4 +30,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-//replace github.com/Kaese72/sdup-lib => ../sdup-lib
+// replace github.com/Kaese72/sdup-lib => ../sdup-lib
+
+// replace github.com/Kaese72/huemie-lib => ../huemie-lib

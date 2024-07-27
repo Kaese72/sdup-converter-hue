@@ -1,6 +1,7 @@
 package sduphue
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/Kaese72/device-store/rest/models"
@@ -8,15 +9,29 @@ import (
 	"github.com/amimof/huego"
 )
 
-func (target SDUPHueTarget) getAllDevices() (specs []models.Device, err error) {
+func (target SDUPHueTarget) getAllDevices() ([]models.Device, error) {
+	specs := []models.Device{}
 	hueLights, err := bridge.GetLights()
 	if err != nil {
-		return
+		return nil, err
 	}
 
 	for _, light := range hueLights {
 		hueLight := createLightDevice(light)
 		specs = append(specs, hueLight)
+	}
+	return specs, nil
+}
+
+func (target *SDUPHueTarget) getAllGroups() (specs []models.Group, err error) {
+	hueGroups, err := bridge.GetGroups()
+	if err != nil {
+		return
+	}
+
+	for _, group := range hueGroups {
+		hueGroup := createDeviceGroup(group)
+		specs = append(specs, hueGroup)
 	}
 	return
 }
@@ -87,7 +102,7 @@ func createLightDevice(light huego.Light) models.Device {
 				Text: &light.UniqueID,
 			},
 		},
-		Capabilities: []models.Capability{
+		Capabilities: []models.DeviceCapability{
 			{
 				Name: CapabilityActivate,
 			},
@@ -135,7 +150,7 @@ func createLightDevice(light huego.Light) models.Device {
 			)
 		}
 		//Attach capability to change color with xy coordinates
-		device.Capabilities = append(device.Capabilities, models.Capability{
+		device.Capabilities = append(device.Capabilities, models.DeviceCapability{
 			Name: CapabilitySetColorXY,
 		})
 	}
@@ -153,10 +168,26 @@ func createLightDevice(light huego.Light) models.Device {
 			},
 		)
 		//Attach capability to change color temperature
-		device.Capabilities = append(device.Capabilities, models.Capability{
+		device.Capabilities = append(device.Capabilities, models.DeviceCapability{
 			Name: CapabilitySetColorTemp,
 		})
 	}
 
 	return device
+}
+
+func createDeviceGroup(group huego.Group) models.Group {
+	g := models.Group{
+		BridgeIdentifier: strconv.Itoa(group.ID),
+		Name:             group.Name,
+		Capabilities: []models.GroupCapability{
+			{
+				Name: CapabilityActivate,
+			},
+			{
+				Name: CapabilityDeactivate,
+			},
+		},
+	}
+	return g
 }

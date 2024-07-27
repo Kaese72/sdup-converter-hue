@@ -73,7 +73,15 @@ func (target SDUPHueTarget) Initialize() (chan deviceupdates.Update, error) {
 				log.Error("Error when fetching devices", map[string]interface{}{"error": err.Error()})
 			} else {
 				for _, newDevice := range hueDevices {
-					channel <- deviceupdates.Update{Device: newDevice}
+					channel <- deviceupdates.Update{Device: &newDevice}
+				}
+			}
+			hueGroups, err := target.getAllGroups()
+			if err != nil {
+				log.Error("Error when fetching groups", map[string]interface{}{"error": err.Error()})
+			} else {
+				for _, newGroup := range hueGroups {
+					channel <- deviceupdates.Update{Group: &newGroup}
 				}
 			}
 			timer.Reset(2 * time.Second)
@@ -82,7 +90,7 @@ func (target SDUPHueTarget) Initialize() (chan deviceupdates.Update, error) {
 	return channel, nil
 }
 
-func (target SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey string, argument models.CapabilityArgs) error {
+func (target SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey string, argument models.DeviceCapabilityArgs) error {
 	capability, ok := capRegistry[capabilityKey]
 	if !ok {
 		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing
@@ -102,6 +110,22 @@ func (target SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey str
 	default:
 		return sduptemplates.NoSuchDevice
 	}
+}
+
+func (target SDUPHueTarget) GTriggerCapability(groupID string, capabilityKey string, argument models.GroupCapabilityArgs) error {
+	capability, ok := gCapRegistry[capabilityKey]
+	if !ok {
+		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing
+		log.Debug("Could not find capability", map[string]interface{}{"group": string(groupID), "capability": string(capabilityKey)})
+		return sduptemplates.NoSuchCapability
+	}
+
+	groupIndex, err := strconv.Atoi(groupID)
+	if err != nil {
+		return sduptemplates.NoSuchGroup
+	}
+
+	return capability(groupIndex, argument)
 }
 
 func InitSDUPHueTarget(URL, APIKey string) SDUPHueTarget {

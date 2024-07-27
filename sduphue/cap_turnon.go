@@ -10,13 +10,13 @@ func init() {
 	gCapRegistry[CapabilityActivate] = GTriggerTurnOn
 }
 
-func TriggerTurnOn(id int, _ devicestoretemplates.CapabilityArgs) error {
+func TriggerTurnOn(id int, _ devicestoretemplates.DeviceCapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	_, err := bridge.SetLightState(id, huego.State{On: true})
 	return err
 }
 
-func GTriggerTurnOn(id int, _ devicestoretemplates.CapabilityArgs) error {
+func GTriggerTurnOn(id int, _ devicestoretemplates.GroupCapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	_, err := bridge.SetGroupState(id, huego.State{On: true})
 	return err
