@@ -4,13 +4,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Kaese72/device-store/rest/models"
+	"github.com/Kaese72/device-store/ingestmodels"
 	log "github.com/Kaese72/huemie-lib/logging"
 	"github.com/amimof/huego"
 )
 
-func (target SDUPHueTarget) getAllDevices() ([]models.Device, error) {
-	specs := []models.Device{}
+func (target SDUPHueTarget) getAllDevices() ([]ingestmodels.Device, error) {
+	specs := []ingestmodels.Device{}
 	hueLights, err := bridge.GetLights()
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func (target SDUPHueTarget) getAllDevices() ([]models.Device, error) {
 	return specs, nil
 }
 
-func (target *SDUPHueTarget) getAllGroups() (specs []models.Group, err error) {
+func (target *SDUPHueTarget) getAllGroups() (specs []ingestmodels.Group, err error) {
 	hueGroups, err := bridge.GetGroups()
 	if err != nil {
 		return
@@ -85,10 +85,10 @@ const (
 	CapabilitySetColorTemp string = "setcolorct"
 )
 
-func createLightDevice(light huego.Light) models.Device {
-	device := models.Device{
+func createLightDevice(light huego.Light) ingestmodels.Device {
+	device := ingestmodels.Device{
 		BridgeIdentifier: HueDeviceID{Type: LIGHT, Index: light.ID}.SDUPEncode(),
-		Attributes: []models.Attribute{
+		Attributes: []ingestmodels.Attribute{
 			{
 				Name:    AttributeActive,
 				Boolean: &light.State.On,
@@ -102,7 +102,7 @@ func createLightDevice(light huego.Light) models.Device {
 				Text: &light.UniqueID,
 			},
 		},
-		Capabilities: []models.DeviceCapability{
+		Capabilities: []ingestmodels.DeviceCapability{
 			{
 				Name: CapabilityActivate,
 			},
@@ -119,14 +119,14 @@ func createLightDevice(light huego.Light) models.Device {
 			// If the XY is set, use it as an attribute
 			device.Attributes = append(
 				device.Attributes,
-				models.Attribute{
+				ingestmodels.Attribute{
 					Name:    AttributeColorX,
 					Numeric: &light.State.Xy[0],
 				},
 			)
 			device.Attributes = append(
 				device.Attributes,
-				models.Attribute{
+				ingestmodels.Attribute{
 					Name:    AttributeColorY,
 					Numeric: &light.State.Xy[1],
 				},
@@ -138,19 +138,19 @@ func createLightDevice(light huego.Light) models.Device {
 			}
 			device.Attributes = append(
 				device.Attributes,
-				models.Attribute{
+				ingestmodels.Attribute{
 					Name: AttributeColorX,
 				},
 			)
 			device.Attributes = append(
 				device.Attributes,
-				models.Attribute{
+				ingestmodels.Attribute{
 					Name: AttributeColorY,
 				},
 			)
 		}
 		//Attach capability to change color with xy coordinates
-		device.Capabilities = append(device.Capabilities, models.DeviceCapability{
+		device.Capabilities = append(device.Capabilities, ingestmodels.DeviceCapability{
 			Name: CapabilitySetColorXY,
 		})
 	}
@@ -162,13 +162,13 @@ func createLightDevice(light huego.Light) models.Device {
 		ct := float32(light.State.Ct)
 		device.Attributes = append(
 			device.Attributes,
-			models.Attribute{
+			ingestmodels.Attribute{
 				Name:    AttributeColorTemp,
 				Numeric: &ct,
 			},
 		)
 		//Attach capability to change color temperature
-		device.Capabilities = append(device.Capabilities, models.DeviceCapability{
+		device.Capabilities = append(device.Capabilities, ingestmodels.DeviceCapability{
 			Name: CapabilitySetColorTemp,
 		})
 	}
@@ -176,11 +176,11 @@ func createLightDevice(light huego.Light) models.Device {
 	return device
 }
 
-func createDeviceGroup(group huego.Group) models.Group {
-	g := models.Group{
+func createDeviceGroup(group huego.Group) ingestmodels.Group {
+	g := ingestmodels.Group{
 		BridgeIdentifier: strconv.Itoa(group.ID),
 		Name:             group.Name,
-		Capabilities: []models.GroupCapability{
+		Capabilities: []ingestmodels.GroupCapability{
 			{
 				Name: CapabilityActivate,
 			},

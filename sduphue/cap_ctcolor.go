@@ -3,7 +3,7 @@ package sduphue
 import (
 	"errors"
 
-	devicestoretemplates "github.com/Kaese72/device-store/rest/models"
+	"github.com/Kaese72/device-store/ingestmodels"
 	"github.com/amimof/huego"
 	"github.com/mitchellh/mapstructure"
 )
@@ -17,7 +17,7 @@ type CTColorArgs struct {
 	Ct *float32 `mapstructure:"ct"`
 }
 
-func TriggerSetCTColor(id int, args devicestoretemplates.DeviceCapabilityArgs) error {
+func TriggerSetCTColor(id int, args ingestmodels.DeviceCapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs CTColorArgs
@@ -32,7 +32,7 @@ func TriggerSetCTColor(id int, args devicestoretemplates.DeviceCapabilityArgs) e
 	return err
 }
 
-func GTriggerSetCTColor(id int, args devicestoretemplates.GroupCapabilityArgs) error {
+func GTriggerSetCTColor(id int, args ingestmodels.GroupCapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs CTColorArgs

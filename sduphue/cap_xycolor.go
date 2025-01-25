@@ -3,7 +3,7 @@ package sduphue
 import (
 	"errors"
 
-	devicestoretemplates "github.com/Kaese72/device-store/rest/models"
+	"github.com/Kaese72/device-store/ingestmodels"
 	"github.com/amimof/huego"
 	"github.com/mitchellh/mapstructure"
 )
@@ -18,7 +18,7 @@ type XYColorArgs struct {
 	Y *float32 `mapstructure:"y"`
 }
 
-func TriggerSetXYColor(id int, args devicestoretemplates.DeviceCapabilityArgs) error {
+func TriggerSetXYColor(id int, args ingestmodels.DeviceCapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs XYColorArgs
@@ -37,7 +37,7 @@ func TriggerSetXYColor(id int, args devicestoretemplates.DeviceCapabilityArgs) e
 	return err
 }
 
-func GTriggerSetXYColor(id int, args devicestoretemplates.GroupCapabilityArgs) error {
+func GTriggerSetXYColor(id int, args ingestmodels.GroupCapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs XYColorArgs

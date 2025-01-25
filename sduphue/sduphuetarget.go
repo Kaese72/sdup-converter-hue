@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Kaese72/device-store/rest/models"
+	"github.com/Kaese72/device-store/ingestmodels"
 	log "github.com/Kaese72/huemie-lib/logging"
 	"github.com/Kaese72/sdup-lib/deviceupdates"
 	"github.com/Kaese72/sdup-lib/sduptemplates"
@@ -90,7 +90,7 @@ func (target SDUPHueTarget) Initialize() (chan deviceupdates.Update, error) {
 	return channel, nil
 }
 
-func (target SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey string, argument models.DeviceCapabilityArgs) error {
+func (target SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey string, argument ingestmodels.DeviceCapabilityArgs) error {
 	capability, ok := capRegistry[capabilityKey]
 	if !ok {
 		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing
@@ -112,7 +112,7 @@ func (target SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey str
 	}
 }
 
-func (target SDUPHueTarget) GTriggerCapability(groupID string, capabilityKey string, argument models.GroupCapabilityArgs) error {
+func (target SDUPHueTarget) GTriggerCapability(groupID string, capabilityKey string, argument ingestmodels.GroupCapabilityArgs) error {
 	capability, ok := gCapRegistry[capabilityKey]
 	if !ok {
 		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing

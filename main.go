@@ -62,11 +62,6 @@ func main() {
 		return
 	}
 
-	if err := myVip.WriteConfigAs("./config.used.yaml"); err != nil {
-		log.Error(err.Error())
-		return
-	}
-
 	if err := conf.Validate(); err != nil {
 		log.Error(err.Error())
 		obj, err := json.Marshal(conf)
