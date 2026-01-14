@@ -113,6 +113,12 @@ func createLightDevice(light huego.Light) ingestmodels.Device {
 			{
 				Name: CapabilityDeactivate,
 			},
+			{
+				Name: CapabilitySetBrightness,
+			},
+			{
+				Name: CapabilityDim,
+			},
 		},
 	}
 	// #################
@@ -190,6 +196,12 @@ func createDeviceGroup(group huego.Group) ingestmodels.Group {
 			},
 			{
 				Name: CapabilityDeactivate,
+			},
+			{
+				Name: CapabilitySetBrightness,
+			},
+			{
+				Name: CapabilityDim,
 			},
 		},
 	}
