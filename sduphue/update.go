@@ -83,6 +83,10 @@ const (
 	CapabilitySetColorXY string = "setcolorxy"
 	//CapabilitySetColorTemp means that you can change the temperature in color mode
 	CapabilitySetColorTemp string = "setcolorct"
+	// CapabilitySetBrightness means that you can change the brightness of the light
+	CapabilitySetBrightness string = "setbrightness"
+	// CapabilityDim means that you can dim the light by some value
+	CapabilityDim string = "dim"
 )
 
 func createLightDevice(light huego.Light) ingestmodels.Device {
