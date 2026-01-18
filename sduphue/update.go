@@ -9,8 +9,8 @@ import (
 	"github.com/amimof/huego"
 )
 
-func (target SDUPHueTarget) getAllDevices() ([]ingestmodels.Device, error) {
-	specs := []ingestmodels.Device{}
+func (target SDUPHueTarget) getAllDevices() ([]ingestmodels.IngestDevice, error) {
+	specs := []ingestmodels.IngestDevice{}
 	hueLights, err := bridge.GetLights()
 	if err != nil {
 		return nil, err
@@ -23,7 +23,7 @@ func (target SDUPHueTarget) getAllDevices() ([]ingestmodels.Device, error) {
 	return specs, nil
 }
 
-func (target *SDUPHueTarget) getAllGroups() (specs []ingestmodels.Group, err error) {
+func (target *SDUPHueTarget) getAllGroups() (specs []ingestmodels.IngestGroup, err error) {
 	hueGroups, err := bridge.GetGroups()
 	if err != nil {
 		return
@@ -89,10 +89,10 @@ const (
 	CapabilityDim string = "dim"
 )
 
-func createLightDevice(light huego.Light) ingestmodels.Device {
-	device := ingestmodels.Device{
+func createLightDevice(light huego.Light) ingestmodels.IngestDevice {
+	device := ingestmodels.IngestDevice{
 		BridgeIdentifier: HueDeviceID{Type: LIGHT, Index: light.ID}.SDUPEncode(),
-		Attributes: []ingestmodels.Attribute{
+		Attributes: []ingestmodels.IngestAttribute{
 			{
 				Name:    AttributeActive,
 				Boolean: &light.State.On,
@@ -106,18 +106,38 @@ func createLightDevice(light huego.Light) ingestmodels.Device {
 				Text: &light.UniqueID,
 			},
 		},
-		Capabilities: []ingestmodels.DeviceCapability{
+		Capabilities: []ingestmodels.IngestDeviceCapability{
 			{
-				Name: CapabilityActivate,
+				Name:          CapabilityActivate,
+				ArgumentSpecs: []ingestmodels.IngestArgumentSpec{},
 			},
 			{
-				Name: CapabilityDeactivate,
+				Name:          CapabilityDeactivate,
+				ArgumentSpecs: []ingestmodels.IngestArgumentSpec{},
 			},
 			{
 				Name: CapabilitySetBrightness,
+				ArgumentSpecs: []ingestmodels.IngestArgumentSpec{
+					{
+						Name: "value",
+						Numeric: &ingestmodels.IngestNumericArgumentSpec{
+							Min: 1,
+							Max: 100,
+						},
+					},
+				},
 			},
 			{
 				Name: CapabilityDim,
+				ArgumentSpecs: []ingestmodels.IngestArgumentSpec{
+					{
+						Name: "inc",
+						Numeric: &ingestmodels.IngestNumericArgumentSpec{
+							Min: -100,
+							Max: 100,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -129,14 +149,14 @@ func createLightDevice(light huego.Light) ingestmodels.Device {
 			// If the XY is set, use it as an attribute
 			device.Attributes = append(
 				device.Attributes,
-				ingestmodels.Attribute{
+				ingestmodels.IngestAttribute{
 					Name:    AttributeColorX,
 					Numeric: &light.State.Xy[0],
 				},
 			)
 			device.Attributes = append(
 				device.Attributes,
-				ingestmodels.Attribute{
+				ingestmodels.IngestAttribute{
 					Name:    AttributeColorY,
 					Numeric: &light.State.Xy[1],
 				},
@@ -148,20 +168,36 @@ func createLightDevice(light huego.Light) ingestmodels.Device {
 			}
 			device.Attributes = append(
 				device.Attributes,
-				ingestmodels.Attribute{
+				ingestmodels.IngestAttribute{
 					Name: AttributeColorX,
 				},
 			)
 			device.Attributes = append(
 				device.Attributes,
-				ingestmodels.Attribute{
+				ingestmodels.IngestAttribute{
 					Name: AttributeColorY,
 				},
 			)
 		}
 		//Attach capability to change color with xy coordinates
-		device.Capabilities = append(device.Capabilities, ingestmodels.DeviceCapability{
+		device.Capabilities = append(device.Capabilities, ingestmodels.IngestDeviceCapability{
 			Name: CapabilitySetColorXY,
+			ArgumentSpecs: []ingestmodels.IngestArgumentSpec{
+				{
+					Name: "x",
+					Numeric: &ingestmodels.IngestNumericArgumentSpec{
+						Min: 0,
+						Max: 1,
+					},
+				},
+				{
+					Name: "y",
+					Numeric: &ingestmodels.IngestNumericArgumentSpec{
+						Min: 0,
+						Max: 1,
+					},
+				},
+			},
 		})
 	}
 	// #################
@@ -172,36 +208,65 @@ func createLightDevice(light huego.Light) ingestmodels.Device {
 		ct := float32(light.State.Ct)
 		device.Attributes = append(
 			device.Attributes,
-			ingestmodels.Attribute{
+			ingestmodels.IngestAttribute{
 				Name:    AttributeColorTemp,
 				Numeric: &ct,
 			},
 		)
 		//Attach capability to change color temperature
-		device.Capabilities = append(device.Capabilities, ingestmodels.DeviceCapability{
+		device.Capabilities = append(device.Capabilities, ingestmodels.IngestDeviceCapability{
 			Name: CapabilitySetColorTemp,
+			ArgumentSpecs: []ingestmodels.IngestArgumentSpec{
+				{
+					Name: "ct",
+					Numeric: &ingestmodels.IngestNumericArgumentSpec{
+						Min: 153,
+						Max: 500,
+					},
+				},
+			},
 		})
 	}
 
 	return device
 }
 
-func createDeviceGroup(group huego.Group) ingestmodels.Group {
-	g := ingestmodels.Group{
+func createDeviceGroup(group huego.Group) ingestmodels.IngestGroup {
+	g := ingestmodels.IngestGroup{
 		BridgeIdentifier: strconv.Itoa(group.ID),
 		Name:             group.Name,
-		Capabilities: []ingestmodels.GroupCapability{
+		Capabilities: []ingestmodels.IngestGroupCapability{
 			{
-				Name: CapabilityActivate,
+				Name:          CapabilityActivate,
+				ArgumentSpecs: []ingestmodels.IngestArgumentSpec{},
 			},
 			{
-				Name: CapabilityDeactivate,
+				Name:          CapabilityDeactivate,
+				ArgumentSpecs: []ingestmodels.IngestArgumentSpec{},
 			},
 			{
 				Name: CapabilitySetBrightness,
+				ArgumentSpecs: []ingestmodels.IngestArgumentSpec{
+					{
+						Name: "value",
+						Numeric: &ingestmodels.IngestNumericArgumentSpec{
+							Min: 1,
+							Max: 100,
+						},
+					},
+				},
 			},
 			{
 				Name: CapabilityDim,
+				ArgumentSpecs: []ingestmodels.IngestArgumentSpec{
+					{
+						Name: "inc",
+						Numeric: &ingestmodels.IngestNumericArgumentSpec{
+							Min: -100,
+							Max: 100,
+						},
+					},
+				},
 			},
 		},
 	}

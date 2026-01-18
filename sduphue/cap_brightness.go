@@ -17,7 +17,7 @@ type CTBrightnessArgs struct {
 	Value *float32 `mapstructure:"value"`
 }
 
-func CTriggerSetBrightness(id int, args ingestmodels.DeviceCapabilityArgs) error {
+func CTriggerSetBrightness(id int, args ingestmodels.IngestDeviceCapabilityArgs) error {
 	var pArgs CTBrightnessArgs
 	if err := mapstructure.Decode(args, &pArgs); err != nil {
 		return err
@@ -31,7 +31,7 @@ func CTriggerSetBrightness(id int, args ingestmodels.DeviceCapabilityArgs) error
 	return err
 }
 
-func GTriggerSetBrightness(id int, args ingestmodels.GroupCapabilityArgs) error {
+func GTriggerSetBrightness(id int, args ingestmodels.IngestGroupCapabilityArgs) error {
 	var pArgs CTBrightnessArgs
 	if err := mapstructure.Decode(args, &pArgs); err != nil {
 		return err

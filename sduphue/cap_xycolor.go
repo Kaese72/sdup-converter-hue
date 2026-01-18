@@ -18,7 +18,7 @@ type XYColorArgs struct {
 	Y *float32 `mapstructure:"y"`
 }
 
-func TriggerSetXYColor(id int, args ingestmodels.DeviceCapabilityArgs) error {
+func TriggerSetXYColor(id int, args ingestmodels.IngestDeviceCapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs XYColorArgs
@@ -37,7 +37,7 @@ func TriggerSetXYColor(id int, args ingestmodels.DeviceCapabilityArgs) error {
 	return err
 }
 
-func GTriggerSetXYColor(id int, args ingestmodels.GroupCapabilityArgs) error {
+func GTriggerSetXYColor(id int, args ingestmodels.IngestGroupCapabilityArgs) error {
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs XYColorArgs

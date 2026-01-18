@@ -90,7 +90,7 @@ func (target SDUPHueTarget) Initialize() (chan deviceupdates.Update, error) {
 	return channel, nil
 }
 
-func (target SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey string, argument ingestmodels.DeviceCapabilityArgs) error {
+func (target SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey string, argument ingestmodels.IngestDeviceCapabilityArgs) error {
 	capability, ok := capRegistry[capabilityKey]
 	if !ok {
 		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing
@@ -112,7 +112,7 @@ func (target SDUPHueTarget) TriggerCapability(deviceID string, capabilityKey str
 	}
 }
 
-func (target SDUPHueTarget) GTriggerCapability(groupID string, capabilityKey string, argument ingestmodels.GroupCapabilityArgs) error {
+func (target SDUPHueTarget) GTriggerCapability(groupID string, capabilityKey string, argument ingestmodels.IngestGroupCapabilityArgs) error {
 	capability, ok := gCapRegistry[capabilityKey]
 	if !ok {
 		// It might be worth looking into being able to differentiate between bridge not supporting and the capability truly not existing

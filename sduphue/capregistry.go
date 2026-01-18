@@ -5,7 +5,7 @@ import (
 )
 
 // capRegistry contains device capability functions
-var capRegistry = map[string]func(id int, _ ingestmodels.DeviceCapabilityArgs) error{}
+var capRegistry = map[string]func(id int, _ ingestmodels.IngestDeviceCapabilityArgs) error{}
 
 // gGapRegistry contains group capability functions
-var gCapRegistry = map[string]func(id int, _ ingestmodels.GroupCapabilityArgs) error{}
+var gCapRegistry = map[string]func(id int, _ ingestmodels.IngestGroupCapabilityArgs) error{}

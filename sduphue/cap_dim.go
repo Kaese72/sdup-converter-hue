@@ -17,7 +17,7 @@ type CTDimArgs struct {
 	Inc *float32 `mapstructure:"inc"`
 }
 
-func CTriggerDim(id int, args ingestmodels.DeviceCapabilityArgs) error {
+func CTriggerDim(id int, args ingestmodels.IngestDeviceCapabilityArgs) error {
 	var pArgs CTDimArgs
 	if err := mapstructure.Decode(args, &pArgs); err != nil {
 		return err
@@ -31,7 +31,7 @@ func CTriggerDim(id int, args ingestmodels.DeviceCapabilityArgs) error {
 	return err
 }
 
-func GTriggerDim(id int, args ingestmodels.GroupCapabilityArgs) error {
+func GTriggerDim(id int, args ingestmodels.IngestGroupCapabilityArgs) error {
 	var pArgs CTDimArgs
 	if err := mapstructure.Decode(args, &pArgs); err != nil {
 		return err
