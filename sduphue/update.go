@@ -61,6 +61,8 @@ var ctColorLights = map[string]bool{
 const (
 	//AttributeActive represents whether the device is currently on or off
 	AttributeActive string = "active"
+	//AttributeBrightness represents the brightness of the device
+	AttributeBrightness string = "brightness"
 	//AttributeColorXY represents the primary color of the device, represented by xy coordinates
 	AttributeColorX string = "colorx"
 	AttributeColorY string = "colory"
@@ -96,6 +98,13 @@ func createLightDevice(light huego.Light) ingestmodels.IngestDevice {
 			{
 				Name:    AttributeActive,
 				Boolean: &light.State.On,
+			},
+			{
+				Name: AttributeBrightness,
+				Numeric: func() *float32 {
+					bri := float32(light.State.Bri)
+					return &bri
+				}(),
 			},
 			{
 				Name: AttributeDescription,
