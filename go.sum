@@ -42,8 +42,8 @@ github.com/Kaese72/device-store v0.0.60 h1:B0cVRGrtoxlOl1RTv2ug6HW1C76IVMvgAp27E
 github.com/Kaese72/device-store v0.0.60/go.mod h1:+ee9qTSIXvf4U9JLenDpACqZ/mYYI/PdFLGYTO8/Hxg=
 github.com/Kaese72/huemie-lib v0.0.5 h1:gNfG+NhH7O/C0AzzZmlnG5ZOzp+suD2mWvvWNUCtwSc=
 github.com/Kaese72/huemie-lib v0.0.5/go.mod h1:3hEu8ov7sCxyxtjZFZ4W+3pZkenEewfqSr7i5C17C2Y=
-github.com/Kaese72/sdup-lib v0.0.17 h1:vsrUPYIGw/7QFNsDyPIZcAJAgmIafGV/U1/1YZrl3bs=
-github.com/Kaese72/sdup-lib v0.0.17/go.mod h1:UKMegDdNMvnRg6sqb8hOXpzP3nt8zsr88+vyAMhr2zY=
+github.com/Kaese72/sdup-lib v0.0.18 h1:APBLA5BBLWN7iFzb+WYC/9XNmit6ZHYgh9eadDjpPX8=
+github.com/Kaese72/sdup-lib v0.0.18/go.mod h1:UKMegDdNMvnRg6sqb8hOXpzP3nt8zsr88+vyAMhr2zY=
 github.com/amimof/huego v1.1.0 h1:MS91hcnUqkWO9hSgA8Zi1UVyMwT2FzR5vAJQovTJm14=
 github.com/amimof/huego v1.1.0/go.mod h1:z1Sy7Rrdzmb+XsGHVEhODrRJRDq4RCFW7trCI5cKmeA=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
