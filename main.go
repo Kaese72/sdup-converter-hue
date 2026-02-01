@@ -52,8 +52,8 @@ func main() {
 	// # Enroll Config
 	// ENROLL_STORE
 	myVip.BindEnv("enroll.store")
-	// ENROLL_ADAPTER_KEY
-	myVip.BindEnv("enroll.adapter-key")
+	// ENROLL_TOKEN
+	myVip.BindEnv("enroll.token")
 
 	var conf config.Config
 	err := myVip.Unmarshal(&conf)
