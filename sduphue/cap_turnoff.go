@@ -2,6 +2,7 @@ package sduphue
 
 import (
 	"github.com/Kaese72/device-store/ingestmodels"
+	"github.com/Kaese72/sdup-lib/adapter"
 	"github.com/amimof/huego"
 )
 
@@ -10,14 +11,14 @@ func init() {
 	gCapRegistry[CapabilityDeactivate] = GTriggerTurnOff
 }
 
-func TriggerTurnOff(id int, _ ingestmodels.IngestDeviceCapabilityArgs) error {
+func TriggerTurnOff(id int, _ ingestmodels.IngestDeviceCapabilityArgs) *adapter.AdapterError {
 	//FIXME Is there anythig interesting in the huego response ?
 	_, err := bridge.SetLightState(id, huego.State{On: false})
-	return err
+	return adapterErrorFromErr(err)
 }
 
-func GTriggerTurnOff(id int, _ ingestmodels.IngestGroupCapabilityArgs) error {
+func GTriggerTurnOff(id int, _ ingestmodels.IngestGroupCapabilityArgs) *adapter.AdapterError {
 	//FIXME Is there anythig interesting in the huego response ?
 	_, err := bridge.SetGroupState(id, huego.State{On: false})
-	return err
+	return adapterErrorFromErr(err)
 }

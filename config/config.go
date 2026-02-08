@@ -2,50 +2,44 @@ package config
 
 import (
 	"errors"
-	"fmt"
+	"strings"
 
-	"github.com/Kaese72/sdup-lib/deviceupdates"
+	"github.com/spf13/viper"
 )
-
-type ListenConfig struct {
-	ListenAddress string `mapstructure:"address"`
-	ListenPort    int    `mapstructure:"port"`
-}
-
-func (conf ListenConfig) URL() string {
-	return fmt.Sprintf("http://%s:%d", conf.ListenAddress, conf.ListenPort)
-}
-
-func (config ListenConfig) Validate() error {
-	if config.ListenAddress == "" {
-		return errors.New("empty listen address")
-	}
-
-	if config.ListenPort < 0 || config.ListenPort > 65665 {
-		return fmt.Errorf("invalid port number, %d", config.ListenPort)
-	}
-	//FIXME Validate StoreEnrollmentConfig
-	return nil
-}
 
 // Config is the top level config structure
 type Config struct {
-	DebugLogging      *bool                               `mapstructure:"debug-logging"`
-	Hue               HueConfig                           `mapstructure:"hue"`
-	HTTPServer        ListenConfig                        `mapstructure:"http-server"`
-	EnrollDeviceStore deviceupdates.StoreEnrollmentConfig `mapstructure:"enroll"`
+	Adapter struct {
+		Hue struct {
+			URL    string `mapstructure:"url"`
+			APIKey string `mapstructure:"api-key"`
+		} `mapstructure:"hue"`
+	} `mapstructure:"adapter"`
 }
 
-// Validate checks whether all fields are appropriately set
-func (conf *Config) Validate() error {
-	if err := conf.HTTPServer.Validate(); err != nil {
-		return err
-	}
+func ReadConfig() (Config, error) {
+	myVip := viper.New()
+	// Set replaces to allow keys like "database.mongodb.connection-string"
+	// WARNING. Overriding any of these may hav unintended consequences.
+	myVip.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
+	// # Hue server configuration
+	// URL to server, eg. http://
+	// ADAPTER_HUE_URL
+	myVip.BindEnv("adapter.hue.url")
+	// preconfigured api key string
+	// ADAPTER_HUE_API_KEY
+	myVip.BindEnv("adapter.hue.api-key")
 
-	if err := conf.Hue.Validate(); err != nil {
-		return err
+	var conf Config
+	err := myVip.Unmarshal(&conf)
+	if err != nil {
+		return Config{}, err
 	}
-
-	// Ignore logging since there is not much to validate
-	return nil
+	if conf.Adapter.Hue.APIKey == "" {
+		return Config{}, errors.New("must provide adapter.hue.api-key")
+	}
+	if conf.Adapter.Hue.URL == "" {
+		return Config{}, errors.New("must provide adapter.hue.url")
+	}
+	return conf, nil
 }
