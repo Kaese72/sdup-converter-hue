@@ -15,7 +15,11 @@ func main() {
 		log.Error("Failed to read config", map[string]interface{}{"error": err.Error()})
 		os.Exit(1)
 	}
-	hueTarget := sduphue.InitSDUPHueTarget(conf.Adapter.Hue.URL, conf.Adapter.Hue.APIKey)
+	hueTarget, err := sduphue.InitSDUPHueTarget(conf.Adapter.Hue.Host, conf.Adapter.Hue.APIKey, conf.Adapter.Hue.IgnoreTLSErrors)
+	if err != nil {
+		log.Error("Failed to initialize Hue target", map[string]interface{}{"error": err.Error()})
+		os.Exit(1)
+	}
 	// Make sure we fulfil the trigger interfaces,
 	var _ adapter.DeviceTriggerCapability = hueTarget
 	var _ adapter.GroupTriggerCapability = hueTarget

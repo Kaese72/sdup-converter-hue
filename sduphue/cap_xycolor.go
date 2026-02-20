@@ -5,8 +5,8 @@ import (
 
 	"github.com/Kaese72/device-store/ingestmodels"
 	"github.com/Kaese72/sdup-lib/adapter"
-	"github.com/amimof/huego"
 	"github.com/mitchellh/mapstructure"
+	"github.com/openhue/openhue-go"
 )
 
 func init() {
@@ -19,7 +19,10 @@ type XYColorArgs struct {
 	Y *float32 `mapstructure:"y"`
 }
 
-func TriggerSetXYColor(id int, args ingestmodels.IngestDeviceCapabilityArgs) *adapter.AdapterError {
+func TriggerSetXYColor(target SDUPHueTarget, id string, args ingestmodels.IngestDeviceCapabilityArgs) *adapter.AdapterError {
+	if target.home == nil {
+		return &adapter.AdapterError{Code: 500, Message: "home not initialized"}
+	}
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs XYColorArgs
@@ -34,11 +37,15 @@ func TriggerSetXYColor(id int, args ingestmodels.IngestDeviceCapabilityArgs) *ad
 		return &adapter.AdapterError{Code: http.StatusBadRequest, Message: "y must be set"}
 	}
 
-	_, err := bridge.SetLightState(id, huego.State{On: true, Xy: []float32{*pArgs.X, *pArgs.Y}})
+	color := openhue.Color{Xy: &openhue.GamutPosition{X: pArgs.X, Y: pArgs.Y}}
+	err := target.home.UpdateLight(id, openhue.LightPut{Color: &color})
 	return adapterErrorFromErr(err)
 }
 
-func GTriggerSetXYColor(id int, args ingestmodels.IngestGroupCapabilityArgs) *adapter.AdapterError {
+func GTriggerSetXYColor(target SDUPHueTarget, id string, args ingestmodels.IngestGroupCapabilityArgs) *adapter.AdapterError {
+	if target.home == nil {
+		return &adapter.AdapterError{Code: 500, Message: "home not initialized"}
+	}
 	//FIXME Is there anythig interesting in the huego response ?
 	//FIXME Limitations on x and y variables
 	var pArgs XYColorArgs
@@ -53,6 +60,7 @@ func GTriggerSetXYColor(id int, args ingestmodels.IngestGroupCapabilityArgs) *ad
 		return &adapter.AdapterError{Code: http.StatusBadRequest, Message: "y must be set"}
 	}
 
-	_, err := bridge.SetGroupState(id, huego.State{On: true, Xy: []float32{*pArgs.X, *pArgs.Y}})
+	color := openhue.Color{Xy: &openhue.GamutPosition{X: pArgs.X, Y: pArgs.Y}}
+	err := target.home.UpdateGroupedLight(id, openhue.GroupedLightPut{Color: &color})
 	return adapterErrorFromErr(err)
 }

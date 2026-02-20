@@ -1,17 +1,18 @@
 package sduphue
 
 import (
-	"strconv"
-	"strings"
+	"fmt"
 
 	"github.com/Kaese72/device-store/ingestmodels"
-	log "github.com/Kaese72/huemie-lib/logging"
-	"github.com/amimof/huego"
+	"github.com/openhue/openhue-go"
 )
 
 func (target SDUPHueTarget) getAllDevices() ([]ingestmodels.IngestDevice, error) {
 	specs := []ingestmodels.IngestDevice{}
-	hueLights, err := bridge.GetLights()
+	if target.home == nil {
+		return nil, fmt.Errorf("home not initialized")
+	}
+	hueLights, err := target.home.GetLights()
 	if err != nil {
 		return nil, err
 	}
@@ -24,38 +25,25 @@ func (target SDUPHueTarget) getAllDevices() ([]ingestmodels.IngestDevice, error)
 }
 
 func (target *SDUPHueTarget) getAllGroups() (specs []ingestmodels.IngestGroup, err error) {
-	hueGroups, err := bridge.GetGroups()
+	if target.home == nil {
+		err = fmt.Errorf("home not initialized")
+		return
+	}
+	groupNameByID := target.getGroupedLightNameMap()
+	groupedLights, err := target.home.GetGroupedLights()
 	if err != nil {
 		return
 	}
 
-	for _, group := range hueGroups {
-		hueGroup := createDeviceGroup(group)
+	for id, group := range groupedLights {
+		name := groupNameByID[id]
+		if name == "" {
+			name = "Group"
+		}
+		hueGroup := createDeviceGroup(group, name)
 		specs = append(specs, hueGroup)
 	}
 	return
-}
-
-// Not lowercase according to docs, but it seems like strings are not properly speced
-const (
-	OnOffLight         = "on/off light"
-	DimmableLight      = "dimmable light"
-	ColorTempLight     = "color temperature light"
-	ColorLight         = "color light"
-	ExtendedColorLight = "extended color light"
-)
-
-// xyColorLights contains the different lights that support xy color control
-// FIXME I might be able to tell if the light has uspport of xy color mode by checking the presence of "xy" in the state retrieved form the bridge
-var xyColorLights = map[string]bool{
-	ColorLight:         true,
-	ExtendedColorLight: true,
-}
-
-var ctColorLights = map[string]bool{
-	ColorTempLight:     true,
-	ColorLight:         true,
-	ExtendedColorLight: true,
 }
 
 const (
@@ -91,30 +79,11 @@ const (
 	CapabilityDim string = "dim"
 )
 
-func createLightDevice(light huego.Light) ingestmodels.IngestDevice {
+func createLightDevice(light openhue.LightGet) ingestmodels.IngestDevice {
+	lightID := safeString(light.Id)
 	device := ingestmodels.IngestDevice{
-		BridgeIdentifier: HueDeviceID{Type: LIGHT, Index: light.ID}.SDUPEncode(),
-		Attributes: []ingestmodels.IngestAttribute{
-			{
-				Name:    AttributeActive,
-				Boolean: &light.State.On,
-			},
-			{
-				Name: AttributeBrightness,
-				Numeric: func() *float32 {
-					bri := float32(light.State.Bri)
-					return &bri
-				}(),
-			},
-			{
-				Name: AttributeDescription,
-				Text: &light.Name,
-			},
-			{
-				Name: AttributeUniqueID,
-				Text: &light.UniqueID,
-			},
-		},
+		BridgeIdentifier: lightID,
+		Attributes:       []ingestmodels.IngestAttribute{},
 		Capabilities: []ingestmodels.IngestDeviceCapability{
 			{
 				Name:          CapabilityActivate,
@@ -150,41 +119,50 @@ func createLightDevice(light huego.Light) ingestmodels.IngestDevice {
 			},
 		},
 	}
+	if light.On != nil && light.On.On != nil {
+		device.Attributes = append(device.Attributes, ingestmodels.IngestAttribute{
+			Name:    AttributeActive,
+			Boolean: light.On.On,
+		})
+	}
+	if light.Dimming != nil && light.Dimming.Brightness != nil {
+		brightness := float32(*light.Dimming.Brightness)
+		device.Attributes = append(device.Attributes, ingestmodels.IngestAttribute{
+			Name:    AttributeBrightness,
+			Numeric: &brightness,
+		})
+	}
+	if light.Metadata != nil && light.Metadata.Name != nil {
+		device.Attributes = append(device.Attributes, ingestmodels.IngestAttribute{
+			Name: AttributeDescription,
+			Text: light.Metadata.Name,
+		})
+	}
+	if lightID != "" {
+		device.Attributes = append(device.Attributes, ingestmodels.IngestAttribute{
+			Name: AttributeUniqueID,
+			Text: &lightID,
+		})
+	}
 	// #################
 	// # XY Color Mode #
 	// #################
-	if xyColorLights[strings.ToLower(light.Type)] {
-		if len(light.State.Xy) == 2 {
-			// If the XY is set, use it as an attribute
+	if light.Color != nil && light.Color.Xy != nil {
+		if light.Color.Xy.X != nil && light.Color.Xy.Y != nil {
+			x := *light.Color.Xy.X
+			y := *light.Color.Xy.Y
 			device.Attributes = append(
 				device.Attributes,
 				ingestmodels.IngestAttribute{
 					Name:    AttributeColorX,
-					Numeric: &light.State.Xy[0],
+					Numeric: &x,
 				},
 			)
 			device.Attributes = append(
 				device.Attributes,
 				ingestmodels.IngestAttribute{
 					Name:    AttributeColorY,
-					Numeric: &light.State.Xy[1],
-				},
-			)
-
-		} else {
-			if len(light.State.Xy) != 0 {
-				log.Error("Invalid length on XY array, assuming nil values")
-			}
-			device.Attributes = append(
-				device.Attributes,
-				ingestmodels.IngestAttribute{
-					Name: AttributeColorX,
-				},
-			)
-			device.Attributes = append(
-				device.Attributes,
-				ingestmodels.IngestAttribute{
-					Name: AttributeColorY,
+					Numeric: &y,
 				},
 			)
 		}
@@ -212,9 +190,8 @@ func createLightDevice(light huego.Light) ingestmodels.IngestDevice {
 	// #################
 	// # CT Color Mode #
 	// #################
-	if ctColorLights[strings.ToLower(light.Type)] {
-		//Attach color temperature attrbiute
-		ct := float32(light.State.Ct)
+	if light.ColorTemperature != nil && light.ColorTemperature.Mirek != nil {
+		ct := float32(*light.ColorTemperature.Mirek)
 		device.Attributes = append(
 			device.Attributes,
 			ingestmodels.IngestAttribute{
@@ -240,10 +217,10 @@ func createLightDevice(light huego.Light) ingestmodels.IngestDevice {
 	return device
 }
 
-func createDeviceGroup(group huego.Group) ingestmodels.IngestGroup {
+func createDeviceGroup(group openhue.GroupedLightGet, name string) ingestmodels.IngestGroup {
 	g := ingestmodels.IngestGroup{
-		BridgeIdentifier: strconv.Itoa(group.ID),
-		Name:             group.Name,
+		BridgeIdentifier: safeString(group.Id),
+		Name:             name,
 		Capabilities: []ingestmodels.IngestGroupCapability{
 			{
 				Name:          CapabilityActivate,
@@ -280,4 +257,45 @@ func createDeviceGroup(group huego.Group) ingestmodels.IngestGroup {
 		},
 	}
 	return g
+}
+
+func safeString(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
+func (target *SDUPHueTarget) getGroupedLightNameMap() map[string]string {
+	result := map[string]string{}
+	rooms, err := target.home.GetRooms()
+	if err == nil {
+		for _, room := range rooms {
+			name := "Room"
+			if room.Metadata != nil && room.Metadata.Name != nil {
+				name = *room.Metadata.Name
+			}
+			for serviceID, serviceType := range room.GetServices() {
+				if serviceType == openhue.ResourceIdentifierRtypeGroupedLight {
+					result[serviceID] = name
+				}
+			}
+		}
+	}
+
+	bridgeHome, err := target.home.GetBridgeHome()
+	if err == nil && bridgeHome != nil && bridgeHome.Services != nil {
+		for _, service := range *bridgeHome.Services {
+			if service.Rtype == nil || service.Rid == nil {
+				continue
+			}
+			if *service.Rtype == openhue.ResourceIdentifierRtypeGroupedLight {
+				if _, ok := result[*service.Rid]; !ok {
+					result[*service.Rid] = "Bridge Home"
+				}
+			}
+		}
+	}
+
+	return result
 }

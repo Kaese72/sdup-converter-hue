@@ -1,92 +1,66 @@
 package sduphue
 
 import (
-	"encoding/base64"
-	"fmt"
-	"strconv"
+	"crypto/tls"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/Kaese72/device-store/ingestmodels"
 	log "github.com/Kaese72/huemie-lib/logging"
 	"github.com/Kaese72/sdup-lib/adapter"
-	"github.com/amimof/huego"
+	"github.com/openhue/openhue-go"
 )
-
-var bridge *huego.Bridge
-
-type HueDeviceIDType string
-
-const (
-	LIGHT HueDeviceIDType = "light"
-)
-
-type HueDeviceID struct {
-	Index int
-	Type  HueDeviceIDType
-}
-
-// SDUPEncode converts the index and type into a DeviceID
-// It is a base64 encoded string on the format "<type>/<index>"
-func (id HueDeviceID) SDUPEncode() string {
-	return base64.URLEncoding.EncodeToString([]byte(fmt.Sprintf("%s/%d", id.Type, id.Index)))
-}
-
-func parseHueDeviceID(id string) (HueDeviceID, *adapter.AdapterError) {
-	res, err := base64.URLEncoding.DecodeString(string(id))
-	if err != nil {
-		log.Debug("Failed base64 decode id, resulting in no such device", map[string]interface{}{"VALUE": string(id)})
-		return HueDeviceID{}, &adapter.AdapterError{Code: 404, Message: "No such device"}
-	}
-
-	splitString := strings.SplitN(string(res), "/", 2)
-	if len(splitString) < 2 {
-		log.Debug("Failed to split device ID on /, resulting in no such device", map[string]interface{}{"VALUE": string(res), "LEN": strconv.Itoa(len(splitString))})
-		return HueDeviceID{}, &adapter.AdapterError{Code: 404, Message: "No such device"}
-	}
-
-	index, err := strconv.Atoi(splitString[1])
-	if err != nil {
-		log.Debug("Failed to parse hue index, resulting in no such device", map[string]interface{}{"VALUE": splitString[1]})
-		return HueDeviceID{}, &adapter.AdapterError{Code: 404, Message: "No such device"}
-	}
-
-	return HueDeviceID{
-		Index: index,
-		Type:  HueDeviceIDType(splitString[0]),
-	}, nil
-}
 
 type SDUPHueTarget struct {
+	home            *openhue.Home
+	host            string
+	apiKey          string
+	ignoreTLSErrors bool
+	httpClient      *http.Client
 }
 
+// Initialize starts the updater by first fetching all devices and groups and create an initial state
+// which is seent to the device store. After that it opens a eventstream to the Hue API and continously listens
+// to changes which updates are then sent to the device store. If the connection to the eventstream is lost,
+// it will reconnect and continue listening for changes. The channel returned from this function is never closed,
+// as the updater is expected to run indefinitely until the adapter is stopped.
 func (target SDUPHueTarget) Initialize() (chan adapter.Update, error) {
-	// Start updater
 	channel := make(chan adapter.Update)
 	go func() {
-		timer := time.NewTicker(2 * time.Second)
-		defer timer.Stop()
-		for range timer.C {
-			hueDevices, err := target.getAllDevices()
+		if err := target.sendInitialState(channel); err != nil {
+			log.Error("Error when creating initial state", map[string]interface{}{"error": err.Error()})
+		}
+
+		for {
+			err := target.listenEventStream(channel)
 			if err != nil {
-				log.Error("Error when fetching devices", map[string]interface{}{"error": err.Error()})
-			} else {
-				for _, newDevice := range hueDevices {
-					channel <- adapter.Update{Device: &newDevice}
-				}
+				log.Error("Eventstream disconnected", map[string]interface{}{"error": err.Error()})
 			}
-			hueGroups, err := target.getAllGroups()
-			if err != nil {
-				log.Error("Error when fetching groups", map[string]interface{}{"error": err.Error()})
-			} else {
-				for _, newGroup := range hueGroups {
-					channel <- adapter.Update{Group: &newGroup}
-				}
-			}
-			timer.Reset(2 * time.Second)
+			time.Sleep(2 * time.Second)
 		}
 	}()
 	return channel, nil
+}
+
+func (target SDUPHueTarget) sendInitialState(updates chan adapter.Update) error {
+	hueDevices, err := target.getAllDevices()
+	if err != nil {
+		return err
+	}
+	for _, newDevice := range hueDevices {
+		updates <- adapter.Update{Device: &newDevice}
+	}
+
+	hueGroups, err := target.getAllGroups()
+	if err != nil {
+		return err
+	}
+	for _, newGroup := range hueGroups {
+		updates <- adapter.Update{Group: &newGroup}
+	}
+
+	return nil
 }
 
 func (target SDUPHueTarget) DeviceTriggerCapability(deviceID string, capabilityKey string, argument ingestmodels.IngestDeviceCapabilityArgs) *adapter.AdapterError {
@@ -97,18 +71,11 @@ func (target SDUPHueTarget) DeviceTriggerCapability(deviceID string, capabilityK
 		return &adapter.AdapterError{Code: 404, Message: "No such capability"}
 	}
 
-	hueID, err := parseHueDeviceID(deviceID)
-	if err != nil {
-		return err
-	}
-
-	switch hueID.Type {
-	case LIGHT:
-		return capability(hueID.Index, argument)
-
-	default:
+	if strings.TrimSpace(deviceID) == "" {
 		return &adapter.AdapterError{Code: 404, Message: "No such device"}
 	}
+
+	return capability(target, deviceID, argument)
 }
 
 func (target SDUPHueTarget) GroupTriggerCapability(groupID string, capabilityKey string, argument ingestmodels.IngestGroupCapabilityArgs) *adapter.AdapterError {
@@ -119,16 +86,22 @@ func (target SDUPHueTarget) GroupTriggerCapability(groupID string, capabilityKey
 		return &adapter.AdapterError{Code: 404, Message: "No such capability"}
 	}
 
-	groupIndex, err := strconv.Atoi(groupID)
-	if err != nil {
+	if strings.TrimSpace(groupID) == "" {
 		return &adapter.AdapterError{Code: 404, Message: "No such group"}
 	}
 
-	return capability(groupIndex, argument)
+	return capability(target, groupID, argument)
 }
 
-func InitSDUPHueTarget(URL, APIKey string) SDUPHueTarget {
-	bridge = huego.New(URL, APIKey)
-	target := SDUPHueTarget{}
-	return target
+func InitSDUPHueTarget(host, APIKey string, ignoreTLSErrors bool) (SDUPHueTarget, error) {
+	var httpClient *http.Client
+	if ignoreTLSErrors {
+		httpClient = &http.Client{Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}}
+	}
+	home, err := openhue.NewHome(host, APIKey)
+	if err != nil {
+		return SDUPHueTarget{}, err
+	}
+	target := SDUPHueTarget{home: home, host: host, apiKey: APIKey, ignoreTLSErrors: ignoreTLSErrors, httpClient: httpClient}
+	return target, nil
 }

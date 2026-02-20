@@ -8,10 +8,10 @@ import (
 )
 
 // capRegistry contains device capability functions
-var capRegistry = map[string]func(id int, _ ingestmodels.IngestDeviceCapabilityArgs) *adapter.AdapterError{}
+var capRegistry = map[string]func(target SDUPHueTarget, id string, _ ingestmodels.IngestDeviceCapabilityArgs) *adapter.AdapterError{}
 
 // gGapRegistry contains group capability functions
-var gCapRegistry = map[string]func(id int, _ ingestmodels.IngestGroupCapabilityArgs) *adapter.AdapterError{}
+var gCapRegistry = map[string]func(target SDUPHueTarget, id string, _ ingestmodels.IngestGroupCapabilityArgs) *adapter.AdapterError{}
 
 func adapterErrorFromErr(err error) *adapter.AdapterError {
 	if err == nil {

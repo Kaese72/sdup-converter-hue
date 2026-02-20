@@ -3,7 +3,7 @@ package sduphue
 import (
 	"github.com/Kaese72/device-store/ingestmodels"
 	"github.com/Kaese72/sdup-lib/adapter"
-	"github.com/amimof/huego"
+	"github.com/openhue/openhue-go"
 )
 
 func init() {
@@ -11,14 +11,20 @@ func init() {
 	gCapRegistry[CapabilityDeactivate] = GTriggerTurnOff
 }
 
-func TriggerTurnOff(id int, _ ingestmodels.IngestDeviceCapabilityArgs) *adapter.AdapterError {
-	//FIXME Is there anythig interesting in the huego response ?
-	_, err := bridge.SetLightState(id, huego.State{On: false})
+func TriggerTurnOff(target SDUPHueTarget, id string, _ ingestmodels.IngestDeviceCapabilityArgs) *adapter.AdapterError {
+	if target.home == nil {
+		return &adapter.AdapterError{Code: 500, Message: "home not initialized"}
+	}
+	off := false
+	err := target.home.UpdateLight(id, openhue.LightPut{On: &openhue.On{On: &off}})
 	return adapterErrorFromErr(err)
 }
 
-func GTriggerTurnOff(id int, _ ingestmodels.IngestGroupCapabilityArgs) *adapter.AdapterError {
-	//FIXME Is there anythig interesting in the huego response ?
-	_, err := bridge.SetGroupState(id, huego.State{On: false})
+func GTriggerTurnOff(target SDUPHueTarget, id string, _ ingestmodels.IngestGroupCapabilityArgs) *adapter.AdapterError {
+	if target.home == nil {
+		return &adapter.AdapterError{Code: 500, Message: "home not initialized"}
+	}
+	off := false
+	err := target.home.UpdateGroupedLight(id, openhue.GroupedLightPut{On: &openhue.On{On: &off}})
 	return adapterErrorFromErr(err)
 }

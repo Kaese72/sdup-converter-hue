@@ -11,8 +11,9 @@ import (
 type Config struct {
 	Adapter struct {
 		Hue struct {
-			URL    string `mapstructure:"url"`
+			Host   string `mapstructure:"host"`
 			APIKey string `mapstructure:"api-key"`
+			IgnoreTLSErrors bool `mapstructure:"ignore-tls-errors"`
 		} `mapstructure:"hue"`
 	} `mapstructure:"adapter"`
 }
@@ -23,9 +24,13 @@ func ReadConfig() (Config, error) {
 	// WARNING. Overriding any of these may hav unintended consequences.
 	myVip.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	// # Hue server configuration
-	// URL to server, eg. http://
-	// ADAPTER_HUE_URL
-	myVip.BindEnv("adapter.hue.url")
+	// Hostname or IP to bridge (no scheme), eg. 192.168.1.10
+	// ADAPTER_HUE_HOST
+	myVip.BindEnv("adapter.hue.host")
+	// Whether to ignore TLS errors when connecting to Hue bridge
+	// ADAPTER_HUE_IGNORE_TLS_ERRORS
+	myVip.SetDefault("adapter.hue.ignore-tls-errors", true)
+	myVip.BindEnv("adapter.hue.ignore-tls-errors")
 	// preconfigured api key string
 	// ADAPTER_HUE_API_KEY
 	myVip.BindEnv("adapter.hue.api-key")
@@ -38,8 +43,8 @@ func ReadConfig() (Config, error) {
 	if conf.Adapter.Hue.APIKey == "" {
 		return Config{}, errors.New("must provide adapter.hue.api-key")
 	}
-	if conf.Adapter.Hue.URL == "" {
-		return Config{}, errors.New("must provide adapter.hue.url")
+	if conf.Adapter.Hue.Host == "" {
+		return Config{}, errors.New("must provide adapter.hue.host")
 	}
 	return conf, nil
 }
