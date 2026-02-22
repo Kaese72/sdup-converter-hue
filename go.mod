@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/Kaese72/device-store v0.0.63
 	github.com/Kaese72/huemie-lib v0.0.5
-	github.com/Kaese72/sdup-lib v0.0.21
+	github.com/Kaese72/sdup-lib v0.0.22
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/openhue/openhue-go v0.4.0
 	github.com/spf13/viper v1.21.0

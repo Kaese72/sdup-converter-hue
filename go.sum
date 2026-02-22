@@ -2,8 +2,8 @@ github.com/Kaese72/device-store v0.0.63 h1:/ZJ3xy7oci0IMo9NjHaMyrWIk4GT2VZzsDDbm
 github.com/Kaese72/device-store v0.0.63/go.mod h1:QosremuxCqh5p9Weknw0CPZrGhCINUSGOPW8SsZS32w=
 github.com/Kaese72/huemie-lib v0.0.5 h1:gNfG+NhH7O/C0AzzZmlnG5ZOzp+suD2mWvvWNUCtwSc=
 github.com/Kaese72/huemie-lib v0.0.5/go.mod h1:3hEu8ov7sCxyxtjZFZ4W+3pZkenEewfqSr7i5C17C2Y=
-github.com/Kaese72/sdup-lib v0.0.21 h1:WBQc4KhWc5/6uwBucM/oF9R/GjTKjUDztL2xbVvmL10=
-github.com/Kaese72/sdup-lib v0.0.21/go.mod h1:QCQ1B3yLILly4W9AScgq8ngh7NXQErbWqNLZm4j7X/w=
+github.com/Kaese72/sdup-lib v0.0.22 h1:507tb3h9lnVQVrOpGZXfjJUriM81lYYzpSBdXb9NaO8=
+github.com/Kaese72/sdup-lib v0.0.22/go.mod h1:QCQ1B3yLILly4W9AScgq8ngh7NXQErbWqNLZm4j7X/w=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0 h1:axGnT1gRIfimI7gJifB699GoE/oq+F2MU7Dml6nw9rQ=
 github.com/apapsch/go-jsonmerge/v2 v2.0.0/go.mod h1:lvDnEdqiQrp0O42VQGgmlKpxL1AP2+08jFMw88y4klk=
