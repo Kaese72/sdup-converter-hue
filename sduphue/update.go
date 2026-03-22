@@ -29,19 +29,26 @@ func (target *SDUPHueTarget) getAllGroups() (specs []ingestmodels.IngestGroup, e
 		err = fmt.Errorf("home not initialized")
 		return
 	}
-	groupNameByID := target.getGroupedLightNameMap()
-	groupedLights, err := target.home.GetGroupedLights()
+	rooms, err := target.home.GetRooms()
 	if err != nil {
 		return
 	}
-
-	for id, group := range groupedLights {
-		name := groupNameByID[id]
-		if name == "" {
-			name = "Group"
+	for _, room := range rooms {
+		name := "Room"
+		if room.Metadata != nil && room.Metadata.Name != nil {
+			name = *room.Metadata.Name
 		}
-		hueGroup := createDeviceGroup(group, name)
-		specs = append(specs, hueGroup)
+		var groupedLightID string
+		for serviceID, serviceType := range room.GetServices() {
+			if serviceType == openhue.ResourceIdentifierRtypeGroupedLight {
+				groupedLightID = serviceID
+				break
+			}
+		}
+		if groupedLightID == "" {
+			continue
+		}
+		specs = append(specs, createDeviceGroup(groupedLightID, name))
 	}
 	return
 }
@@ -217,9 +224,9 @@ func createLightDevice(light openhue.LightGet) ingestmodels.IngestDevice {
 	return device
 }
 
-func createDeviceGroup(group openhue.GroupedLightGet, name string) ingestmodels.IngestGroup {
+func createDeviceGroup(groupedLightID string, name string) ingestmodels.IngestGroup {
 	g := ingestmodels.IngestGroup{
-		BridgeIdentifier: safeString(group.Id),
+		BridgeIdentifier: groupedLightID,
 		Name:             name,
 		Capabilities: []ingestmodels.IngestGroupCapability{
 			{
@@ -266,36 +273,3 @@ func safeString(value *string) string {
 	return *value
 }
 
-func (target *SDUPHueTarget) getGroupedLightNameMap() map[string]string {
-	result := map[string]string{}
-	rooms, err := target.home.GetRooms()
-	if err == nil {
-		for _, room := range rooms {
-			name := "Room"
-			if room.Metadata != nil && room.Metadata.Name != nil {
-				name = *room.Metadata.Name
-			}
-			for serviceID, serviceType := range room.GetServices() {
-				if serviceType == openhue.ResourceIdentifierRtypeGroupedLight {
-					result[serviceID] = name
-				}
-			}
-		}
-	}
-
-	bridgeHome, err := target.home.GetBridgeHome()
-	if err == nil && bridgeHome != nil && bridgeHome.Services != nil {
-		for _, service := range *bridgeHome.Services {
-			if service.Rtype == nil || service.Rid == nil {
-				continue
-			}
-			if *service.Rtype == openhue.ResourceIdentifierRtypeGroupedLight {
-				if _, ok := result[*service.Rid]; !ok {
-					result[*service.Rid] = "Bridge Home"
-				}
-			}
-		}
-	}
-
-	return result
-}
